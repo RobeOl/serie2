@@ -9,7 +9,7 @@ from quaternary import genera_quaternary
 app = Flask(__name__)
 CORS(app)
 
-def generate_midi(start_note, sequence_type, tempo_type, harmony,
+def generate_music(start_note, sequence_type, tempo_type, harmony,
                    note_length=1,
                    interval=3, leap=-1,
                    interval1=3, leap1=3,
