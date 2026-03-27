@@ -7,7 +7,8 @@ import os
 from quaternary import genera_quaternary
 
 app = Flask(__name__)
-CORS(app)
+#CORS(app)
+CORS(app, origins="https://murosigma.it")
 
 def generate_music(start_note, sequence_type, tempo_type, harmony,
                    note_length=1,
