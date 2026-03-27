@@ -3,7 +3,7 @@ from flask_cors import CORS
 from music21 import *
 import tempfile
 import os
-# from binary import genera_binary
+from binary import genera_binary
 from quaternary import genera_quaternary
 
 app = Flask(__name__)
