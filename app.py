@@ -7,11 +7,16 @@ from binary import genera_binary
 from quaternary import genera_quaternary
 
 app = Flask(__name__)
-#CORS(app)
+
 CORS(app, origins=[
     "http://localhost:8000",
     "https://murosigma.it"
 ])
+
+# 🔹 CACHE GLOBALE
+last_stream = None
+last_params = None
+
 
 def generate_music(start_note, sequence_type, tempo_type, harmony,
                    note_length=1,
@@ -36,15 +41,16 @@ def generate_music(start_note, sequence_type, tempo_type, harmony,
     return s
 
 
-@app.route("/generate", methods=["POST"])
-def generate_midi():
-    data = request.json
+# 🔹 FUNZIONE DI ACCESSO CON CACHE
+def get_cached_stream(data):
+    global last_stream, last_params
 
-    s = generate_music(
-        data["start_note"],
-        data["sequence_type"],
-        data["tempo"],
-        data["harmony"],
+    # creiamo una chiave unica basata su TUTTI i parametri
+    params = (
+        data.get("start_note"),
+        data.get("sequence_type"),
+        data.get("tempo"),
+        data.get("harmony"),
         float(data.get("note_length", 1)),
         data.get("interval", 0),
         data.get("leap", 0),
@@ -53,6 +59,20 @@ def generate_midi():
         data.get("interval2", 0),
         data.get("leap2", 0),
     )
+
+    # se i parametri cambiano → rigenera
+    if params != last_params:
+        last_stream = generate_music(*params)
+        last_params = params
+
+    return last_stream
+
+
+@app.route("/generate", methods=["POST"])
+def generate_midi():
+    data = request.json
+
+    s = get_cached_stream(data)
 
     tmp = tempfile.NamedTemporaryFile(suffix=".mid", delete=False)
     s.write('midi', fp=tmp.name)
@@ -64,19 +84,7 @@ def generate_midi():
 def generate_score():
     data = request.json
 
-    s = generate_music(
-        data["start_note"],
-        data["sequence_type"],
-        data["tempo"],
-        data["harmony"],
-        float(data.get("note_length", 1)),
-        data.get("interval", 0),
-        data.get("leap", 0),
-        data.get("interval1", 0),
-        data.get("leap1", 0),
-        data.get("interval2", 0),
-        data.get("leap2", 0),
-    )
+    s = get_cached_stream(data)
 
     tmp = tempfile.NamedTemporaryFile(suffix=".musicxml", delete=False)
     s.write('musicxml', fp=tmp.name)
