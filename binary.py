@@ -183,6 +183,12 @@ def genera_binary(tipo,note_len,i,j,ottave,bass_clef,starting_note,harmony,harmo
 
 	# remove last element
 	notes.pop()
-	melody.append(notes)
-
+	if bass_clef:
+		melody.insert(0, clef.BassClef())
+		melody.append(notes)
+		melody_bass = melody.transpose(-24)
+		melody = melody_bass
+	else:
+		melody.append(notes)
+   
 	return(melody)
