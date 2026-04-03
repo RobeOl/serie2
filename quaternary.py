@@ -465,6 +465,9 @@ def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,har
             nn = nn+4
         # === Score (grand staff) ===
         melody = stream.Score()
+        if bass_clef:
+            right_bass = right.transpose(-24)
+            right = right_bass
         melody.insert(0, right)
         melody.insert(0, left)
     else:
