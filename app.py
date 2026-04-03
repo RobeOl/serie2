@@ -38,6 +38,8 @@ def generate_music(start_note, sequence_type, tempo_type, harmony, harmony_type,
     s.metadata.title = ""
     s.metadata.composer = ""
 
+    key = music21.key.Key('C')
+    s,insert(0,key)
     s.insert(0, instrument.Piano())
 
     return s
