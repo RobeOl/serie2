@@ -473,9 +473,10 @@ def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,har
         notes.pop()
         if bass_clef:
             melody.insert(0, clef.BassClef())
-        
-        melody.append(notes)
-        melody_bass = melody.transpose(-12)
-        melody = melody_bass
-
+            melody.append(notes)
+            melody_bass = melody.transpose(-12)
+            melody = melody_bass
+        else:
+            melody.append(notes)
+   
     return(melody)
