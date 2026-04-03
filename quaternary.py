@@ -360,7 +360,10 @@ def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,har
         # right hand
         right = stream.Part()
         right.insert(0, instrument.Piano())
-        right.insert(0, clef.TrebleClef())
+        if bass_clef:
+            right.insert(0, clef.BassClef())
+        else:
+            right.insert(0, clef.TrebleClef())
         # remove last element
         notes.pop()
         right.append(notes)
@@ -395,7 +398,10 @@ def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,har
         # right hand
         right = stream.Part()
         right.insert(0, instrument.Piano())
-        right.insert(0, clef.TrebleClef())
+        if bass_clef:
+            right.insert(0, clef.BassClef())
+        else:
+            right.insert(0, clef.TrebleClef())
         # remove last element
         notes.pop()
         right.append(notes)
@@ -433,7 +439,10 @@ def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,har
         # right hand
         right = stream.Part()
         right.insert(0, instrument.Piano())
-        right.insert(0, clef.TrebleClef())
+        if bass_clef:
+            right.insert(0, clef.BassClef())
+        else:
+            right.insert(0, clef.TrebleClef())
         # remove last element
         notes.pop()
         right.append(notes)
@@ -468,7 +477,6 @@ def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,har
         if bass_clef:
             right_bass = right.transpose(-24)
             right = right_bass
-            right.insert(0, clef.BassClef())
         melody.insert(0, right)
         melody.insert(0, left)
     else:
