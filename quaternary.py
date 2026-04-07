@@ -12,6 +12,16 @@ def f_durata(x):
 	# x.duration.quarterLength = random.choice([1, 1/2, 1/4])
 	x.duration.quarterLength = random.choice([1, 1/2, 1/4])
 
+def make_chord_with_min_third(A, B):
+    # calcola distanza in semitoni (melodica A → B)
+    semitones = interval.Interval(A, B).semitones
+
+    # se inferiore a 3 semitoni (terza minore)
+    if semitones < 3:
+        B = B.transpose(12)  # alza di un'ottava
+
+    return chord.Chord([A, B])
+
 def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,harmony,harmony_type):
     x = note.Note(starting_note)
 
@@ -423,10 +433,12 @@ def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,har
             X4.octave = 3
             durata = X1.duration.quarterLength
             durata = durata*2
-            Cx = chord.Chord([X1,X3])
+            Cx = make_chord_with_min_third(X1, X3)
+            #Cx = chord.Chord([X1,X3])
             Cx.duration.quarterLength = durata
             left.append(Cx)
-            Cx = chord.Chord([X2,X4])
+            Cx = make_chord_with_min_third(X2, X4)
+            #Cx = chord.Chord([X2,X4])
             Cx.duration.quarterLength = durata
             left.append(Cx)
             #print(Cx)
@@ -464,10 +476,12 @@ def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,har
             X4.octave = 3
             durata = X1.duration.quarterLength
             durata = durata*2
-            Cx = chord.Chord([X2,X4])
+            Cx = make_chord_with_min_third(X2, X4)
+            #Cx = chord.Chord([X2,X4])
             Cx.duration.quarterLength = durata
             left.append(Cx)
-            Cx = chord.Chord([X1,X3])
+            Cx = make_chord_with_min_third(X1, X3)
+            #Cx = chord.Chord([X1,X3])
             Cx.duration.quarterLength = durata
             left.append(Cx)
             #print(Cx)
