@@ -17,11 +17,11 @@ def make_chord_with_min_third(A, B):
     semitones = interval.Interval(A, B).semitones
 
     # # se inferiore a 3 semitoni (terza minore)
-    # if semitones < 3:
+    # if abs(semitones) < 3:
     #     B = B.transpose(12)  # alza B di un'ottava
     
     # se inferiore a 3 semitoni (terza minore)
-    if semitones < 3:
+    if abs(semitones) < 3:
         A = A.transpose(-12)  # abbassa A di un'ottava
 
     return chord.Chord([A, B])
@@ -418,8 +418,8 @@ def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,har
             X4.octave = 3
             durata = X1.duration.quarterLength
             durata = durata*4
-            Cx = spread_chord_min_third([X1, X2, X3, X4])
-            #Cx = chord.Chord([X1,X2,X3,X4])
+            #Cx = spread_chord_min_third([X1, X2, X3, X4])
+            Cx = chord.Chord([X1,X2,X3,X4])
             Cx.duration.quarterLength = durata
             left.append(Cx)
             #print(Cx)
