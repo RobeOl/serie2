@@ -102,7 +102,10 @@ def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,har
         notes.append(copy.deepcopy(note1))
         seconda = note1.name
 
-        condition = True
+        current_couple = [prima,seconda]
+        condition = (current_couple!=first_couple)
+
+        #condition = True
         # following intervals
         while condition:
             note1.transpose(j,inPlace=True)
@@ -197,7 +200,10 @@ def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,har
         notes.append(copy.deepcopy(note1))
         seconda = note1.name
 
-        condition = True
+        current_couple = [prima,seconda]
+        condition = (current_couple!=first_couple)
+
+        #condition = True
         # following intervals
         while condition:
             note1.transpose(j,inPlace=True)
@@ -287,7 +293,10 @@ def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,har
         notes.append(copy.deepcopy(note1))
         seconda = note1.name
 
-        condition = True
+        current_couple = [prima,seconda]
+        condition = (current_couple!=first_couple)
+
+        #condition = True
         # following intervals
         while condition:
             note1.transpose(j,inPlace=True)
@@ -358,7 +367,10 @@ def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,har
         notes.append(copy.deepcopy(note1))
         seconda = note1.name
 
-        condition = True
+        current_couple = [prima,seconda]
+        condition = (current_couple!=first_couple)
+
+        #condition = True
         # following intervals
         while condition:
             note1.transpose(j,inPlace=True)
