@@ -10,7 +10,8 @@ app = Flask(__name__)
 
 CORS(app, origins=[
     "http://localhost:8000",
-    "https://murosigma.it"
+    "https://murosigma.it",
+    "https://marcobittelli.it"
 ])
 
 # 🔹 CACHE GLOBALE
