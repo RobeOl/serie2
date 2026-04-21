@@ -45,7 +45,7 @@ def spread_chord_min_third(notes, min_semitones=3):
 
     return chord.Chord(notes)
 
-def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,harmony,harmony_type):
+def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,harmony,harmony_type,refresh_harmony_only):
     x = note.Note(starting_note)
 
     if starting_note <= 6:
@@ -55,7 +55,12 @@ def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,har
 
     oct = x.octave
 
-    notes = []
+    global LAST_NOTES
+
+    if refresh_harmony_only and LAST_NOTES is not None:
+        notes = copy.deepcopy(LAST_NOTES)
+    else:
+        notes = []
 
     # first interval, starting with C4
     note1 = x

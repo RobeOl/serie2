@@ -230,6 +230,11 @@ let synth
 let osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(document.getElementById("score"))
 let midiBlobGlobal
 
+osmd.setOptions({
+    drawPartNames: false,
+    drawPartAbbreviations: false
+})
+
 /* 🎚 BPM CONTROL */
 const bpmSlider = document.getElementById("bpmSlider")
 const bpmValue = document.getElementById("bpmValue")
@@ -283,17 +288,42 @@ function getParams(){
 //     location.reload()
 // }
 
+// function resetApp(){
+//     document.getElementById("octave").checked = false
+//     document.getElementById("harmony").checked = false
+
+//     // reset UI collegata
+//     document.getElementById("octaveLabel").textContent = "(2 octaves)"
+//     document.getElementById("harmonyOptions").style.display = "none"
+//     document.getElementById("harmonyWarning").style.display = "none"
+//     document.getElementById("bassClef").checked = false
+
+//     location.reload()
+// }
+
 function resetApp(){
+    // valori principali richiesti
+    document.getElementById("sequenceType").value = "Binary"
+    document.getElementById("tempo").value = "sequence-constrained"
+    document.getElementById("startNote").value = "0" // C
+
+    // trigger UI collegata
+    document.getElementById("sequenceType").dispatchEvent(new Event("change"))
+    document.getElementById("tempo").dispatchEvent(new Event("change"))
+
+    // reset checkbox
     document.getElementById("octave").checked = false
     document.getElementById("harmony").checked = false
+    document.getElementById("bassClef").checked = false
 
-    // reset UI collegata
+    // reset label/UI
     document.getElementById("octaveLabel").textContent = "(2 octaves)"
     document.getElementById("harmonyOptions").style.display = "none"
     document.getElementById("harmonyWarning").style.display = "none"
-    document.getElementById("bassClef").checked = false
 
-    location.reload()
+    // opzionale: reset BPM
+    document.getElementById("bpmSlider").value = 100
+    document.getElementById("bpmValue").textContent = "100"
 }
 
 document.getElementById("tempo").addEventListener("change", function(){
