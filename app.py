@@ -126,34 +126,32 @@ def generate_music(start_note, sequence_type, tempo_type, harmony, harmony_type,
 #     return last_stream
 
 def invert_stream(s):
-    notes = [el for el in s if isinstance(el, note.Note)]
-    
-    if len(notes) < 2:
-        return s
-
     inverted = stream.Stream()
 
-    # prima nota uguale
-    first = notes[0]
-    inverted.append(note.Note(first.pitch, quarterLength=first.quarterLength))
+    prev_pitch = None
+    last_new_pitch = None
 
-    prev_pitch = first.pitch.midi
+    for el in s:
+        if isinstance(el, note.Note):
+            if prev_pitch is None:
+                new_note = note.Note(el.pitch, quarterLength=el.quarterLength)
+                last_new_pitch = el.pitch.midi
+            else:
+                interval = el.pitch.midi - prev_pitch
+                inv_interval = -interval
+                new_pitch = last_new_pitch + inv_interval
 
-    for i in range(1, len(notes)):
-        curr_pitch = notes[i].pitch.midi
+                new_note = note.Note()
+                new_note.pitch.midi = new_pitch
+                new_note.quarterLength = el.quarterLength
 
-        interval = curr_pitch - prev_pitch
-        inverted_interval = -interval
+                last_new_pitch = new_pitch
 
-        new_pitch = inverted[-1].pitch.midi + inverted_interval
+            prev_pitch = el.pitch.midi
+            inverted.append(new_note)
 
-        new_note = note.Note()
-        new_note.pitch.midi = new_pitch
-        new_note.quarterLength = notes[i].quarterLength
-
-        inverted.append(new_note)
-
-        prev_pitch = curr_pitch
+        else:
+            inverted.append(el)
 
     return inverted
 
