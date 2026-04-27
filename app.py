@@ -90,41 +90,72 @@ def generate_music(start_note, sequence_type, tempo_type, harmony, harmony_type,
 
 
 # 🔹 FUNZIONE DI ACCESSO CON CACHE
-def get_cached_stream(data):
-    global last_stream, last_params, access_count
+# def get_cached_stream(data):
+#     global last_stream, last_params, access_count
 
-    # creiamo una chiave unica basata su TUTTI i parametri
-    params = (
-        data.get("start_note"),
-        data.get("sequence_type"),
-        data.get("tempo"),
-        data.get("harmony"),
-        data.get("harmony_type"),  
-        data.get("octave", 1),
-        data.get("bass_clef"),
-        data.get("bpm", 100),
-        float(data.get("note_length", 1)),
-        data.get("interval", 0),
-        data.get("leap", 0),
-        data.get("interval1", 0),
-        data.get("leap1", 0),
-        data.get("interval2", 0),
-        data.get("leap2", 0),
-    )
+#     # creiamo una chiave unica basata su TUTTI i parametri
+#     params = (
+#         data.get("start_note"),
+#         data.get("sequence_type"),
+#         data.get("tempo"),
+#         data.get("harmony"),
+#         data.get("harmony_type"),  
+#         data.get("octave", 1),
+#         data.get("bass_clef"),
+#         data.get("bpm", 100),
+#         float(data.get("note_length", 1)),
+#         data.get("interval", 0),
+#         data.get("leap", 0),
+#         data.get("interval1", 0),
+#         data.get("leap1", 0),
+#         data.get("interval2", 0),
+#         data.get("leap2", 0),
+#     )
 
-    if (params != last_params) or (access_count > 1):
-        last_stream = generate_music(*params)
-        last_params = params
-        access_count=1
-    elif(access_count==2):
-        last_stream = generate_music(*params)
-        last_params = params
-        access_count = 0
-    else:
-        access_count = 2
+#     if (params != last_params) or (access_count > 1):
+#         last_stream = generate_music(*params)
+#         last_params = params
+#         access_count=1
+#     elif(access_count==2):
+#         last_stream = generate_music(*params)
+#         last_params = params
+#         access_count = 0
+#     else:
+#         access_count = 2
 
-    return last_stream
+#     return last_stream
 
+def invert_stream(s):
+    notes = [el for el in s if isinstance(el, note.Note)]
+    
+    if len(notes) < 2:
+        return s
+
+    inverted = stream.Stream()
+
+    # prima nota uguale
+    first = notes[0]
+    inverted.append(note.Note(first.pitch, quarterLength=first.quarterLength))
+
+    prev_pitch = first.pitch.midi
+
+    for i in range(1, len(notes)):
+        curr_pitch = notes[i].pitch.midi
+
+        interval = curr_pitch - prev_pitch
+        inverted_interval = -interval
+
+        new_pitch = inverted[-1].pitch.midi + inverted_interval
+
+        new_note = note.Note()
+        new_note.pitch.midi = new_pitch
+        new_note.quarterLength = notes[i].quarterLength
+
+        inverted.append(new_note)
+
+        prev_pitch = curr_pitch
+
+    return inverted
 
 @app.route("/generate", methods=["POST"])
 def generate_midi():
