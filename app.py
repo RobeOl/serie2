@@ -248,7 +248,7 @@ def invert_sequence():
 
             # metadata
             #new_score.insert(0, key.Key('C'))
-            #new_score.insert(0, metadata.Metadata())
+            new_score.insert(0, metadata.Metadata())
             #new_score.insert(0, instrument.Piano())
             new_score.metadata.title = ""
             new_score.metadata.composer = ""
