@@ -191,7 +191,7 @@ def generate_score():
 
     return send_file(tmp.name, mimetype="application/xml")
 
-@app.route("/invert", methods=["POST"])
+@app.route("/transform", methods=["POST"])
 def invert_sequence():
     global last_stream
 
