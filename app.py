@@ -166,6 +166,7 @@ def invert_stream(s):
 @app.route("/generate", methods=["POST"])
 def generate_midi():
     global last_stream
+    global last_params
 
     data = request.json
 
@@ -189,6 +190,8 @@ def generate_midi():
 
     # 🔴 salva la sequenza reale (fondamentale)
     last_stream = copy.deepcopy(s)
+    # salva ultimi parametri
+    last_params = data
 
     tmp = tempfile.NamedTemporaryFile(suffix=".mid", delete=False)
     s.write('midi', fp=tmp.name)
@@ -226,9 +229,12 @@ def invert_sequence():
         inverted_melody = invert_stream(right)
 
         # 2. rigenera armonia
-        new_left = genera_armonia("Quaternary", "classic", inverted_melody)
-        # ⚠️ puoi sostituire parametri con quelli reali se li salvi
-
+        new_left = genera_armonia(
+            last_params.get("sequence_type"),
+            last_params.get("harmony_type"),
+        inverted_melody
+        )
+        
         # 3. ricostruisci score
         new_score = stream.Score()
 
