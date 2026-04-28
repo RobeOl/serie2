@@ -143,6 +143,11 @@ def invert_stream(s):
 
     return inverted
 
+def retrograde_stream(s):
+    retrograded = stream.Part()
+
+    return retrograded
+
 @app.route("/generate", methods=["POST"])
 def generate_midi():
     global last_stream
@@ -198,54 +203,109 @@ def invert_sequence():
     if last_stream is None:
         return {"error": "No sequence generated yet"}, 400
 
-    # 🎼 CASO CON ARMONIA
-    if isinstance(last_stream, stream.Score):
+    data = request.json
+    operation = data.get("operation")
 
-        parts = list(last_stream.parts)
+    if operation == "I":
+        # 🎼 CASO CON ARMONIA
+        if isinstance(last_stream, stream.Score):
 
-        right = parts[0]  # melodia
+            parts = list(last_stream.parts)
 
-        # 1. inverti melodia
-        inverted_melody = invert_stream(right)
+            right = parts[0]  # melodia
 
-        # 2. rigenera armonia
-        new_left = genera_armonia(
-            last_params.get("sequence_type"),
-            last_params.get("harmony_type"),
-        inverted_melody
-        )
-        
-        # 3. ricostruisci score
-        new_score = stream.Score()
+            # 1. inverti melodia
+            inverted_melody = invert_stream(right)
 
-        # mano destra
-        new_score.insert(0, inverted_melody)
+            # 2. rigenera armonia
+            new_left = genera_armonia(
+                last_params.get("sequence_type"),
+                last_params.get("harmony_type"),
+                inverted_melody
+            )
+            
+            # 3. ricostruisci score
+            new_score = stream.Score()
 
-        # mano sinistra
-        new_left.insert(0, instrument.Piano())
-        new_left.insert(0, clef.BassClef())
-        new_score.insert(0, new_left)
+            # mano destra
+            new_score.insert(0, inverted_melody)
 
-        # metadata
-        new_score.insert(0, key.Key('C'))
-        new_score.insert(0, metadata.Metadata())
-        new_score.insert(0, instrument.Piano())
-        new_score.metadata.title = ""
-        new_score.metadata.composer = ""
+            # mano sinistra
+            new_left.insert(0, instrument.Piano())
+            new_left.insert(0, clef.BassClef())
+            new_score.insert(0, new_left)
 
-        last_stream = copy.deepcopy(new_score)
+            # metadata
+            new_score.insert(0, key.Key('C'))
+            new_score.insert(0, metadata.Metadata())
+            new_score.insert(0, instrument.Piano())
+            new_score.metadata.title = ""
+            new_score.metadata.composer = ""
 
-        s = new_score
+            last_stream = copy.deepcopy(new_score)
 
-    # 🎼 CASO SENZA ARMONIA
+            s = new_score
+
+        # 🎼 CASO SENZA ARMONIA
+        else:
+            s = invert_stream(last_stream)
+            s.insert(0, key.Key('C'))
+            s.insert(0, metadata.Metadata())
+            s.insert(0, instrument.Piano())
+            s.metadata.title = ""
+            s.metadata.composer = ""
+            last_stream = copy.deepcopy(s)
+    elif operation=="R":
+        # 🎼 CASO CON ARMONIA
+        if isinstance(last_stream, stream.Score):
+
+            parts = list(last_stream.parts)
+
+            right = parts[0]  # melodia
+
+            # 1. inverti melodia
+            retrograded_melody = retrograde_stream(right)
+
+            # 2. rigenera armonia
+            new_left = genera_armonia(
+                last_params.get("sequence_type"),
+                last_params.get("harmony_type"),
+                retrograded_melody
+            )
+            
+            # 3. ricostruisci score
+            new_score = stream.Score()
+
+            # mano destra
+            new_score.insert(0, retrograded_melody)
+
+            # mano sinistra
+            new_left.insert(0, instrument.Piano())
+            new_left.insert(0, clef.BassClef())
+            new_score.insert(0, new_left)
+
+            # metadata
+            new_score.insert(0, key.Key('C'))
+            new_score.insert(0, metadata.Metadata())
+            new_score.insert(0, instrument.Piano())
+            new_score.metadata.title = ""
+            new_score.metadata.composer = ""
+
+            last_stream = copy.deepcopy(new_score)
+
+            s = new_score
+
+        # 🎼 CASO SENZA ARMONIA
+        else:
+            s = retrograde_stream(last_stream)
+            s.insert(0, key.Key('C'))
+            s.insert(0, metadata.Metadata())
+            s.insert(0, instrument.Piano())
+            s.metadata.title = ""
+            s.metadata.composer = ""
+            last_stream = copy.deepcopy(s)
     else:
-        s = invert_stream(last_stream)
-        s.insert(0, key.Key('C'))
-        s.insert(0, metadata.Metadata())
-        s.insert(0, instrument.Piano())
-        s.metadata.title = ""
-        s.metadata.composer = ""
-        last_stream = copy.deepcopy(s)
+        return {"error": "Invalid operation"}, 400
 
     # 🎵 esporta MIDI
     tmp = tempfile.NamedTemporaryFile(suffix=".mid", delete=False)
