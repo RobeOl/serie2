@@ -88,20 +88,6 @@ def generate_music(start_note, sequence_type, tempo_type, harmony, harmony_type,
 
     return melody
 
-# # inverti melodia e armonia
-# def invert_any_stream(s):
-#     if isinstance(s, stream.Score):
-#         new_score = stream.Score()
-
-#         for part in s.parts:
-#             new_part = invert_stream(part)
-#             new_score.insert(0, new_part)
-ew_pitch
-#         return new_score
-
-#     else:
-#         return invert_stream(s)
-
 def invert_stream(s):
     inverted = stream.Part()
 
