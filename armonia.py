@@ -20,7 +20,7 @@ def genera_armonia(seq_type,harmony_type,s):
     if seq_type=="Binary":
         left = stream.Part()
         # check se inizia con pausa, perchè proveniente da Retrograde
-        for el in S.notesAndRests:
+        for el in s.notesAndRests:
             if el.isRest:
                 left.append(el)
             else:
