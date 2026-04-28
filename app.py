@@ -123,13 +123,6 @@ def invert_stream(s):
                 inv_interval = -interval
                 new_pitch = last_new_pitch + inv_interval
 
-                # # 🎯 correzione di registro
-                # while new_pitch < prev_pitch - 6:
-                # new_pitch += 12
-
-                # while new_pitch > prev_pitch + 6:
-                # new_pitch -= 12
-                # mantiene la nota vicina alla precedente
                 while abs(new_pitch - last_new_pitch) > 6:
                     if new_pitch < last_new_pitch:
                         new_pitch += 12
@@ -237,6 +230,8 @@ def invert_sequence():
         new_score.insert(0, key.Key('C'))
         new_score.insert(0, metadata.Metadata())
         new_score.insert(0, instrument.Piano())
+        new_score.metadata.title = ""
+        new_score.metadata.composer = ""
 
         last_stream = copy.deepcopy(new_score)
 
