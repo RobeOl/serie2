@@ -88,58 +88,21 @@ def generate_music(start_note, sequence_type, tempo_type, harmony, harmony_type,
 
     return melody
 
+def invert_any_stream(s):
+    if isinstance(s, stream.Score):
+        new_score = stream.Score()
 
-# 🔹 FUNZIONE DI ACCESSO CON CACHE
-# def get_cached_stream(data):
-#     global last_stream, last_params, access_count
+        for part in s.parts:
+            new_part = invert_stream(part)
+            new_score.insert(0, new_part)
 
-#     # creiamo una chiave unica basata su TUTTI i parametri
-#     params = (
-#         data.get("start_note"),
-#         data.get("sequence_type"),
-#         data.get("tempo"),
-#         data.get("harmony"),
-#         data.get("harmony_type"),  
-#         data.get("octave", 1),
-#         data.get("bass_clef"),
-#         data.get("bpm", 100),
-#         float(data.get("note_length", 1)),
-#         data.get("interval", 0),
-#         data.get("leap", 0),
-#         data.get("interval1", 0),
-#         data.get("leap1", 0),
-#         data.get("interval2", 0),
-#         data.get("leap2", 0),
-#     )
+        return new_score
 
-#     if (params != last_params) or (access_count > 1):
-#         last_stream = generate_music(*params)
-#         last_params = params
-#         access_count=1
-#     elif(access_count==2):
-#         last_stream = generate_music(*params)
-#         last_params = params
-#         access_count = 0
-#     else:
-#         access_count = 2
-
-#     return last_stream
-
-# def invert_any_stream(s):
-#     if isinstance(s, stream.Score):
-#         new_score = stream.Score()
-
-#         for part in s.parts:
-#             new_part = invert_stream(part)
-#             new_score.insert(0, new_part)
-
-#         return new_score
-
-#     else:
-#         return invert_stream(s)
+    else:
+        return invert_stream(s)
 
 def invert_stream(s):
-    inverted = stream.Stream()
+    inverted = stream.Part()  # 👈 invece di Stream()
 
     prev_pitch = None
     last_new_pitch = None
@@ -168,36 +131,6 @@ def invert_stream(s):
             inverted.append(note.Rest(quarterLength=el.quarterLength))
 
     return inverted
-
-# def invert_stream(s):
-#     inverted = stream.Stream()
-
-#     prev_pitch = None
-#     last_new_pitch = None
-
-#     for el in s:
-#         if isinstance(el, note.Note):
-#             if prev_pitch is None:
-#                 new_note = note.Note(el.pitch, quarterLength=el.quarterLength)
-#                 last_new_pitch = el.pitch.midi
-#             else:
-#                 interval = el.pitch.midi - prev_pitch
-#                 inv_interval = -interval
-#                 new_pitch = last_new_pitch + inv_interval
-
-#                 new_note = note.Note()
-#                 new_note.pitch.midi = new_pitch
-#                 new_note.quarterLength = el.quarterLength
-
-#                 last_new_pitch = new_pitch
-
-#             prev_pitch = el.pitch.midi
-#             inverted.append(new_note)
-
-#         else:
-#             inverted.append(el)
-
-#     return inverted
 
 @app.route("/generate", methods=["POST"])
 def generate_midi():
@@ -251,7 +184,7 @@ def invert_sequence():
     if last_stream is None:
         return {"error": "No sequence generated yet"}, 400
 
-    s = invert_stream(last_stream)
+    s = invert_any_stream(last_stream)
 
     # aggiorna stato (IMPORTANTE)
     last_stream = copy.deepcopy(s)
@@ -260,18 +193,6 @@ def invert_sequence():
     s.write('midi', fp=tmp.name)
 
     return send_file(tmp.name, mimetype="audio/midi")
-
-# @app.route("/invert_score", methods=["POST"])
-# def invert_score():
-#     global last_stream
-
-#     if last_stream is None:
-#         return {"error": "No sequence generated yet"}, 400
-
-#     tmp = tempfile.NamedTemporaryFile(suffix=".musicxml", delete=False)
-#     last_stream.write('musicxml', fp=tmp.name)
-
-#     return send_file(tmp.name, mimetype="application/xml")
 
 @app.route("/health")
 def health():
