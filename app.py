@@ -242,14 +242,14 @@ def invert_sequence():
             new_score.insert(0, inverted_melody)
 
             # mano sinistra
-            new_left.insert(0, instrument.Piano())
+            #new_left.insert(0, instrument.Piano())
             new_left.insert(0, clef.BassClef())
             new_score.insert(0, new_left)
 
             # metadata
-            new_score.insert(0, key.Key('C'))
-            new_score.insert(0, metadata.Metadata())
-            new_score.insert(0, instrument.Piano())
+            #new_score.insert(0, key.Key('C'))
+            #new_score.insert(0, metadata.Metadata())
+            #new_score.insert(0, instrument.Piano())
             new_score.metadata.title = ""
             new_score.metadata.composer = ""
 
