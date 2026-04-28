@@ -240,9 +240,12 @@ def invert_sequence():
     # 🎼 CASO SENZA ARMONIA
     else:
         s = invert_stream(last_stream)
-        last_stream = copy.deepcopy(s)
+        s.insert(0, key.Key('C'))
+        s.insert(0, metadata.Metadata())
+        s.insert(0, instrument.Piano())
         s.metadata.title = ""
         s.metadata.composer = ""
+        last_stream = copy.deepcopy(s)
 
     # 🎵 esporta MIDI
     tmp = tempfile.NamedTemporaryFile(suffix=".mid", delete=False)
