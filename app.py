@@ -118,6 +118,10 @@ def invert_stream(s):
             new_pitches = []
             for p in pitches:
                 new_p = axis - (p - axis)
+                while new_p < axis - 6:
+                    new_p += 12
+                while new_p > axis + 6:
+                    new_p -= 12
                 new_pitches.append(new_p)
 
             new_chord = chord.Chord(new_pitches, quarterLength=el.quarterLength)
@@ -133,12 +137,18 @@ def invert_stream(s):
                 inv_interval = -interval
                 new_pitch = last_new_pitch + inv_interval
 
-                # 🎯 correzione di registro
-                while new_pitch < prev_pitch - 6:
-                new_pitch += 12
+                # # 🎯 correzione di registro
+                # while new_pitch < prev_pitch - 6:
+                # new_pitch += 12
 
-                while new_pitch > prev_pitch + 6:
-                new_pitch -= 12
+                # while new_pitch > prev_pitch + 6:
+                # new_pitch -= 12
+                # mantiene la nota vicina alla precedente
+                while abs(new_pitch - last_new_pitch) > 6:
+                    if new_pitch < last_new_pitch:
+                        new_pitch += 12
+                    else:
+                        new_pitch -= 12
 
                 new_note = note.Note()
                 new_note.pitch.midi = new_pitch
