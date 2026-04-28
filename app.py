@@ -125,14 +125,28 @@ def generate_music(start_note, sequence_type, tempo_type, harmony, harmony_type,
 
 #     return last_stream
 
+# def invert_any_stream(s):
+#     if isinstance(s, stream.Score):
+#         new_score = stream.Score()
+
+#         for part in s.parts:
+#             new_part = invert_stream(part)
+#             new_score.insert(0, new_part)
+
+#         return new_score
+
+#     else:
+#         return invert_stream(s)
+
 def invert_stream(s):
     inverted = stream.Stream()
 
     prev_pitch = None
     last_new_pitch = None
 
-    for el in s:
+    for el in s.recurse():
         if isinstance(el, note.Note):
+
             if prev_pitch is None:
                 new_note = note.Note(el.pitch, quarterLength=el.quarterLength)
                 last_new_pitch = el.pitch.midi
@@ -150,10 +164,40 @@ def invert_stream(s):
             prev_pitch = el.pitch.midi
             inverted.append(new_note)
 
-        else:
-            inverted.append(el)
+        elif isinstance(el, note.Rest):
+            inverted.append(note.Rest(quarterLength=el.quarterLength))
 
     return inverted
+
+# def invert_stream(s):
+#     inverted = stream.Stream()
+
+#     prev_pitch = None
+#     last_new_pitch = None
+
+#     for el in s:
+#         if isinstance(el, note.Note):
+#             if prev_pitch is None:
+#                 new_note = note.Note(el.pitch, quarterLength=el.quarterLength)
+#                 last_new_pitch = el.pitch.midi
+#             else:
+#                 interval = el.pitch.midi - prev_pitch
+#                 inv_interval = -interval
+#                 new_pitch = last_new_pitch + inv_interval
+
+#                 new_note = note.Note()
+#                 new_note.pitch.midi = new_pitch
+#                 new_note.quarterLength = el.quarterLength
+
+#                 last_new_pitch = new_pitch
+
+#             prev_pitch = el.pitch.midi
+#             inverted.append(new_note)
+
+#         else:
+#             inverted.append(el)
+
+#     return inverted
 
 @app.route("/generate", methods=["POST"])
 def generate_midi():
