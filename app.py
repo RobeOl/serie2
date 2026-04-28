@@ -144,9 +144,20 @@ def invert_stream(s):
     return inverted
 
 def retrograde_stream(s):
-    retrograded = stream.Part()
+    new_stream = s.__class__()
 
-    return retrograded
+    elements = list(s.flat.notesAndRests)
+
+    # inverti ordine
+    elements.reverse()
+
+    offset = 0
+    for el in elements:
+        new_el = copy.deepcopy(el)
+        new_stream.insert(offset, new_el)
+        offset += new_el.duration.quarterLength
+
+    return new_stream
 
 @app.route("/generate", methods=["POST"])
 def generate_midi():
@@ -263,21 +274,21 @@ def invert_sequence():
 
             right = parts[0]  # melodia
 
-            # 1. inverti melodia
-            retrograded_melody = retrograde_stream(right)
+            # 1. retrogrado melodia
+            retro_melody = retrograde_stream(right)
 
             # 2. rigenera armonia
             new_left = genera_armonia(
                 last_params.get("sequence_type"),
                 last_params.get("harmony_type"),
-                retrograded_melody
+                retro_melody
             )
             
             # 3. ricostruisci score
             new_score = stream.Score()
 
             # mano destra
-            new_score.insert(0, retrograded_melody)
+            new_score.insert(0, retro_melody)
 
             # mano sinistra
             new_left.insert(0, instrument.Piano())
@@ -303,6 +314,47 @@ def invert_sequence():
             s.insert(0, instrument.Piano())
             s.metadata.title = ""
             s.metadata.composer = ""
+            last_stream = copy.deepcopy(s)
+    elif operation == "RI":
+        # 🎼 CASO CON ARMONIA
+        if isinstance(last_stream, stream.Score):
+
+            parts = list(last_stream.parts)
+            right = parts[0]  # melodia
+
+            # 👇 QUI va la tua riga
+            retro_inverted = retrograde_stream(invert_stream(right))
+
+            # rigenera armonia
+            new_left = genera_armonia(
+                last_params.get("sequence_type"),
+                last_params.get("harmony_type"),
+                retro_inverted
+            )
+
+            # ricostruzione score
+            new_score = stream.Score()
+            new_score.insert(0, retro_inverted)
+
+            new_left.insert(0, instrument.Piano())
+            new_left.insert(0, clef.BassClef())
+            new_score.insert(0, new_left)
+
+            new_score.insert(0, key.Key('C'))
+            new_score.insert(0, metadata.Metadata())
+            new_score.insert(0, instrument.Piano())
+
+            last_stream = copy.deepcopy(new_score)
+            s = new_score
+
+        else:
+            # 👇 stesso punto anche qui
+            s = retrograde_stream(invert_stream(last_stream))
+
+            s.insert(0, key.Key('C'))
+            s.insert(0, metadata.Metadata())
+            s.insert(0, instrument.Piano())
+
             last_stream = copy.deepcopy(s)
     else:
         return {"error": "Invalid operation"}, 400
