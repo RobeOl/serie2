@@ -241,6 +241,8 @@ def invert_sequence():
     else:
         s = invert_stream(last_stream)
         last_stream = copy.deepcopy(s)
+        s.metadata.title = ""
+        s.metadata.composer = ""
 
     # 🎵 esporta MIDI
     tmp = tempfile.NamedTemporaryFile(suffix=".mid", delete=False)
