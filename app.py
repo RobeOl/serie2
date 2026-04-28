@@ -217,21 +217,17 @@ def invert_sequence():
 
     return send_file(tmp.name, mimetype="audio/midi")
 
-@app.route("/invert_score", methods=["POST"])
-def invert_score():
-    global last_stream
+# @app.route("/invert_score", methods=["POST"])
+# def invert_score():
+#     global last_stream
 
-    if last_stream is None:
-        return {"error": "No sequence generated yet"}, 400
+#     if last_stream is None:
+#         return {"error": "No sequence generated yet"}, 400
 
-    s = invert_stream(last_stream)
+#     tmp = tempfile.NamedTemporaryFile(suffix=".musicxml", delete=False)
+#     last_stream.write('musicxml', fp=tmp.name)
 
-    last_stream = s
-
-    tmp = tempfile.NamedTemporaryFile(suffix=".musicxml", delete=False)
-    s.write('musicxml', fp=tmp.name)
-
-    return send_file(tmp.name, mimetype="application/xml")
+#     return send_file(tmp.name, mimetype="application/xml")
 
 @app.route("/health")
 def health():
