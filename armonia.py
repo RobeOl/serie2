@@ -45,11 +45,18 @@ def genera_armonia(seq_type,harmony_type,s):
             nn = nn+2 
         left.append(notes[0])
     elif seq_type=="Quaternary":
+        left = stream.Part()
+        # check se inizia con pausa, perchè proveniente da Retrograde
+        for el in s.notesAndRests:
+            if el.isRest:
+                left.append(el)
+            else:
+                break
         notes=s.notes
         # left hand
         N = len(notes)-1
         nn = 0
-        left = stream.Part()
+        #left = stream.Part()
         if harmony_type=="classic":
             # chords based on four notes      
             while nn<N:
