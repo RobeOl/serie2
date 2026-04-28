@@ -343,6 +343,8 @@ def invert_sequence():
             new_score.insert(0, key.Key('C'))
             new_score.insert(0, metadata.Metadata())
             new_score.insert(0, instrument.Piano())
+            new_score.metadata.title = ""
+            new_score.metadata.composer = ""
 
             last_stream = copy.deepcopy(new_score)
             s = new_score
@@ -354,6 +356,8 @@ def invert_sequence():
             s.insert(0, key.Key('C'))
             s.insert(0, metadata.Metadata())
             s.insert(0, instrument.Piano())
+            s.metadata.title = ""
+            s.metadata.composer = ""
 
             last_stream = copy.deepcopy(s)
     else:
