@@ -88,6 +88,7 @@ def generate_music(start_note, sequence_type, tempo_type, harmony, harmony_type,
 
     return melody
 
+# inverti melodia e armonia
 def invert_any_stream(s):
     if isinstance(s, stream.Score):
         new_score = stream.Score()
@@ -101,14 +102,44 @@ def invert_any_stream(s):
     else:
         return invert_stream(s)
 
+
+# inverti solo melodia
+# def invert_any_stream(s):
+#     if isinstance(s, stream.Score):
+#         new_score = stream.Score()
+
+#         parts = list(s.parts)
+
+#         # mano destra invertita
+#         new_score.insert(0, invert_stream(parts[0]))
+
+#         # mano sinistra invariata
+#         new_score.insert(0, parts[1])
+
+#         return new_score
+
 def invert_stream(s):
-    inverted = stream.Part()  # 👈 invece di Stream()
+    inverted = stream.Part()
 
     prev_pitch = None
     last_new_pitch = None
 
     for el in s.recurse():
-        if isinstance(el, note.Note):
+
+        if isinstance(el, chord.Chord):
+            # inversione "verticale"
+            pitches = [p.midi for p in el.pitches]
+            axis = pitches[0]
+
+            new_pitches = []
+            for p in pitches:
+                new_p = axis - (p - axis)
+                new_pitches.append(new_p)
+
+            new_chord = chord.Chord(new_pitches, quarterLength=el.quarterLength)
+            inverted.append(new_chord)
+
+        elif isinstance(el, note.Note):
 
             if prev_pitch is None:
                 new_note = note.Note(el.pitch, quarterLength=el.quarterLength)
