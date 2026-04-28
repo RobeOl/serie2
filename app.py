@@ -215,11 +215,46 @@ def invert_sequence():
     if last_stream is None:
         return {"error": "No sequence generated yet"}, 400
 
-    s = invert_any_stream(last_stream)
+    # 🎼 CASO CON ARMONIA
+    if isinstance(last_stream, stream.Score):
 
-    # aggiorna stato (IMPORTANTE)
-    last_stream = copy.deepcopy(s)
+        parts = list(last_stream.parts)
 
+        right = parts[0]  # melodia
+
+        # 1. inverti melodia
+        inverted_melody = invert_stream(right)
+
+        # 2. rigenera armonia
+        new_left = genera_armonia("Quaternary", "classic", inverted_melody)
+        # ⚠️ puoi sostituire parametri con quelli reali se li salvi
+
+        # 3. ricostruisci score
+        new_score = stream.Score()
+
+        # mano destra
+        new_score.insert(0, inverted_melody)
+
+        # mano sinistra
+        new_left.insert(0, instrument.Piano())
+        new_left.insert(0, clef.BassClef())
+        new_score.insert(0, new_left)
+
+        # metadata
+        new_score.insert(0, key.Key('C'))
+        new_score.insert(0, metadata.Metadata())
+        new_score.insert(0, instrument.Piano())
+
+        last_stream = copy.deepcopy(new_score)
+
+        s = new_score
+
+    # 🎼 CASO SENZA ARMONIA
+    else:
+        s = invert_stream(last_stream)
+        last_stream = copy.deepcopy(s)
+
+    # 🎵 esporta MIDI
     tmp = tempfile.NamedTemporaryFile(suffix=".mid", delete=False)
     s.write('midi', fp=tmp.name)
 
