@@ -15,13 +15,30 @@ def make_chord_with_min_third(A, B):
 
     return chord.Chord([A, B])
 
+# def rimuovi_pause_iniziali(S):
+#     elementi = list(S.notesAndRests)
+    
+#     i = 0
+#     while i < len(elementi) and elementi[i].isRest:
+#         i += 1
+
+#     return stream.Stream(elementi[i:])
+
 def genera_armonia(seq_type,harmony_type,s):
     if seq_type=="Binary":
+        left = stream.Part()
+        # check se inizia con pausa, perchè proveniente da Retrograde
+        elementi = list(s.notesAndRests)
+        i = 0
+        while i < len(elementi) and elementi[i].isRest:
+            left.append(rest[i])
+            i += 1
+
         notes=s.notes
         # left hand
         N = len(notes)-1
         nn = 0
-        left = stream.Part()
+        # left = stream.Part()
         # chords based on two notes      
         while nn<N:
             X1 = copy.deepcopy(notes[nn])
