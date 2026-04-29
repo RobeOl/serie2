@@ -216,9 +216,9 @@ def invert_sequence():
 
     data = request.json
     operation = data.get("operation")
+    valore = data.get("value")
 
     if operation == "T":
-        valore = data.get("value")
         # 🎼 CASO CON ARMONIA
         if isinstance(last_stream, stream.Score):
 
@@ -260,8 +260,7 @@ def invert_sequence():
 
         # 🎼 CASO SENZA ARMONIA
         else:
-            # s = last_stream.transpose(valore)
-            s = last_stream.transpose(3)
+            s = last_stream.transpose(valore)
             s.insert(0, key.Key('C'))
             s.insert(0, metadata.Metadata())
             s.insert(0, instrument.Piano())
