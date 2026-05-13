@@ -35,7 +35,45 @@ def add_final_chord(left, notes, N):
     left.append(Cf)
 
 
-def genera_armonia(seq_type, harmony_type, s):
+def genera_armonia_coppie(s):
+    # Armonizzazione per coppie consecutive, indipendente da seq_type e harmony_type.
+    # Usata per tempo free e length-constrained.
+    left = stream.Part()
+
+    # check se inizia con pausa, perché proveniente da Retrograde
+    for el in s.notesAndRests:
+        if el.isRest:
+            left.append(el)
+        else:
+            break
+
+    notes = s.notes
+    N = len(notes) - 1
+    nn = 0
+
+    while nn < N:
+        X1 = copy.deepcopy(notes[nn])
+        X1.octave = 3
+        X2 = copy.deepcopy(notes[nn + 1])
+        X2.octave = 3
+        durata = X1.duration.quarterLength + X2.duration.quarterLength
+        Cx = chord.Chord([X1, X2])
+        Cx.duration.quarterLength = durata
+        left.append(Cx)
+        nn = nn + 2
+
+    # bicordo finale: ultima nota una e due ottave sotto
+    # bicordo finale solo se le note sono in numero dispari
+    if N % 2 == 0:
+        add_final_chord(left, notes, N)
+
+    # pausa per completare l'ultima battuta
+    fill_to_measure(left)
+
+    return left
+
+
+def genera_armonia(seq_type, harmony_type, s, multi_k=None):
     # caso binary
     if seq_type == "Binary":
         left = stream.Part()
@@ -84,7 +122,7 @@ def genera_armonia(seq_type, harmony_type, s):
 
         if harmony_type == "classic":
             # accordi su quattro note
-            while nn < N:
+            while nn + 3 <= N:
                 X1 = copy.deepcopy(notes[nn])
                 X1.octave = 3
                 X2 = copy.deepcopy(notes[nn + 1])
@@ -102,7 +140,7 @@ def genera_armonia(seq_type, harmony_type, s):
 
         elif harmony_type == "onbeat":
             # accordi su due note (1-3 e 2-4)
-            while nn < N:
+            while nn + 3 <= N:
                 X1 = copy.deepcopy(notes[nn])
                 X1.octave = 3
                 X2 = copy.deepcopy(notes[nn + 1])
@@ -123,7 +161,7 @@ def genera_armonia(seq_type, harmony_type, s):
 
         elif harmony_type == "offbeat":
             # accordi su due note (2-4 e 1-3)
-            while nn < N:
+            while nn + 3 <= N:
                 X1 = copy.deepcopy(notes[nn])
                 X1.octave = 3
                 X2 = copy.deepcopy(notes[nn + 1])
@@ -187,7 +225,7 @@ def genera_armonia(seq_type, harmony_type, s):
 
         elif harmony_type == "onbeat":
             # accordi su tre note (1-3-5 e 2-4-6)
-            while nn < N:
+            while nn + 5 <= N:
                 X1 = copy.deepcopy(notes[nn])
                 X1.octave = 3
                 X2 = copy.deepcopy(notes[nn + 1])
@@ -212,7 +250,7 @@ def genera_armonia(seq_type, harmony_type, s):
 
         elif harmony_type == "offbeat":
             # accordi su due note (2-4 e 1-3)
-            while nn < N:
+            while nn + 5 <= N:
                 X1 = copy.deepcopy(notes[nn])
                 X1.octave = 3
                 X2 = copy.deepcopy(notes[nn + 1])
@@ -240,5 +278,272 @@ def genera_armonia(seq_type, harmony_type, s):
 
         # pausa per completare l'ultima battuta
         fill_to_measure(left)
+
+    # caso ternary
+    elif seq_type == "Ternary":
+        left = stream.Part()
+        # check se inizia con pausa, perché proveniente da Retrograde
+        for el in s.notesAndRests:
+            if el.isRest:
+                left.append(el)
+            else:
+                break
+
+        notes = s.notes
+        N = len(notes) - 1
+        nn = 0
+
+        if harmony_type == "classic":
+            # accordi su tre note (una si una no dell'esacordo)
+            while nn + 2 <= N:
+                X1 = copy.deepcopy(notes[nn])
+                X1.octave = 3
+                X2 = copy.deepcopy(notes[nn+1])
+                X2.octave = 3
+                X3 = copy.deepcopy(notes[nn+2])
+                X3.octave = 3
+                durata = (X1.duration.quarterLength + X2.duration.quarterLength + X3.duration.quarterLength)
+                Cx = chord.Chord([X1,X2,X3])
+                Cx.duration.quarterLength = durata
+                left.append(Cx)
+                nn = nn+3
+        elif harmony_type=="onbeat":
+            while nn + 2 <= N:
+                X1 = copy.deepcopy(notes[nn])
+                X1.octave = 3
+                X2 = copy.deepcopy(notes[nn+1])
+                X2.octave = 3
+                X3 = copy.deepcopy(notes[nn+2])
+                X3.octave = 3
+                durata = X1.duration.quarterLength
+                Cx = chord.Chord([X1,X2])
+                Cx.duration.quarterLength = durata
+                left.append(Cx)
+                # Pausa della durata di X2
+                pausa = note.Rest()
+                durata = X2.duration.quarterLength
+                pausa.duration.quarterLength = durata
+                left.append(pausa)
+                Cx = chord.Chord([X2, X3])
+                durata = X3.duration.quarterLength
+                Cx.duration.quarterLength = durata
+                left.append(Cx)
+
+                nn = nn+3
+        elif harmony_type=="offbeat":
+            while nn + 2 <= N:
+                X1 = copy.deepcopy(notes[nn])
+                X1.octave = 3
+                X2 = copy.deepcopy(notes[nn+1])
+                X2.octave = 3
+                X3 = copy.deepcopy(notes[nn+2])
+                X3.octave = 3
+                durata = X1.duration.quarterLength
+                # Pausa della stessa durata
+                pausa = note.Rest()
+                pausa.duration.quarterLength = durata
+                left.append(pausa)
+                Cx = chord.Chord([X1,X2])
+                durata = X2.duration.quarterLength
+                Cx.duration.quarterLength = durata
+                left.append(Cx)
+                Cx = chord.Chord([X2, X3])
+                durata = X3.duration.quarterLength
+                Cx.duration.quarterLength = durata
+                left.append(Cx)
+
+                nn = nn+3
+                
+        # bicordo finale: ultima nota una e due ottave sotto
+        add_final_chord(left, notes, N)
+
+        # pausa per completare l'ultima battuta
+        fill_to_measure(left)
+
+    # caso multidimensional
+    elif seq_type == "Multidimensional":
+        left = stream.Part()
+        # check se inizia con pausa, perché proveniente da Retrograde
+        for el in s.notesAndRests:
+            if el.isRest:
+                left.append(el)
+            else:
+                break
+
+        notes = s.notes
+        N = len(notes) - 1
+        K = multi_k if multi_k and multi_k > 0 else 2
+        nn = 0
+
+        MAX_DUR = 4  # durata massima accordo in quarter-lengths (un intero 4/4)
+
+        def add_chord(chord_notes, durata):
+            """Inserisce l'accordo con durata min(durata, MAX_DUR);
+               se eccede aggiunge una pausa per il tempo rimanente."""
+            d = min(durata, MAX_DUR)
+            Cx = chord.Chord(chord_notes)
+            Cx.duration.quarterLength = d
+            left.append(Cx)
+            if durata > MAX_DUR:
+                r = note.Rest()
+                r.duration.quarterLength = durata - MAX_DUR
+                left.append(r)
+
+        def pick_notes(bucket, K):
+            """Se K > 4 prende una nota sì e una no (indici pari), altrimenti tutte."""
+            if K > 4:
+                return [bucket[k] for k in range(0, K, 2)]
+            return bucket
+
+        if harmony_type == "classic":
+            # un accordo per ciclo; se K > 4 prende indici pari
+            while nn + K - 1 <= N:
+                bucket = []
+                durata = 0
+                for k in range(K):
+                    xk = copy.deepcopy(notes[nn + k])
+                    xk.octave = 3
+                    bucket.append(xk)
+                    durata += xk.duration.quarterLength
+                add_chord(pick_notes(bucket, K), durata)
+                nn += K
+
+        elif harmony_type == "onbeat":
+            # due accordi per ciclo (pari poi dispari); se K > 4 dimezza le note
+            while nn + K - 1 <= N:
+                bucket = []
+                durata = 0
+                for k in range(K):
+                    xk = copy.deepcopy(notes[nn + k])
+                    xk.octave = 3
+                    bucket.append(xk)
+                    durata += xk.duration.quarterLength
+                even_notes = [bucket[k] for k in range(0, K, 2)]
+                odd_notes  = [bucket[k] for k in range(1, K, 2)] or even_notes
+                if K > 4:
+                    even_notes = [bucket[k] for k in range(0, K, 4)]       # uno ogni quattro
+                    odd_notes  = [bucket[k] for k in range(2, K, 4)] or even_notes
+                add_chord(even_notes, durata / 2)
+                add_chord(odd_notes,  durata / 2)
+                nn += K
+
+        elif harmony_type == "offbeat":
+            # due accordi per ciclo (dispari poi pari); se K > 4 dimezza le note
+            while nn + K - 1 <= N:
+                bucket = []
+                durata = 0
+                for k in range(K):
+                    xk = copy.deepcopy(notes[nn + k])
+                    xk.octave = 3
+                    bucket.append(xk)
+                    durata += xk.duration.quarterLength
+                even_notes = [bucket[k] for k in range(0, K, 2)]
+                odd_notes  = [bucket[k] for k in range(1, K, 2)] or even_notes
+                if K > 4:
+                    even_notes = [bucket[k] for k in range(0, K, 4)]
+                    odd_notes  = [bucket[k] for k in range(2, K, 4)] or even_notes
+                add_chord(odd_notes,  durata / 2)
+                add_chord(even_notes, durata / 2)
+                nn += K
+
+        # bicordo finale
+        add_final_chord(left, notes, N)
+        fill_to_measure(left)
+
+    return left
+
+
+def _make_chord_notes(bucket, indices):
+    # Dato un bucket ordinato e una lista di indici, restituisce le note
+    # all'ottava 3 pronte per costruire un accordo. Se risulta una sola nota,
+    # la raddoppia un'ottava sotto.
+    selected = [bucket[i] for i in indices if i < len(bucket)]
+    chord_notes = []
+    for n_ in selected:
+        n_copy = copy.deepcopy(n_)
+        n_copy.octave = 3
+        chord_notes.append(n_copy)
+    if len(chord_notes) == 1:
+        low = copy.deepcopy(chord_notes[0])
+        low.octave = 2
+        chord_notes = [low, chord_notes[0]]
+    return chord_notes
+
+
+def genera_armonia_per_misura(s, harmony_type="classic", beats_per_measure=4):
+    # Armonizzazione per length-constrained e free.
+    # Per ogni misura di 4/4 le note vengono ordinate dal basso verso l'alto
+    # e poi raggruppate in accordi secondo harmony_type:
+
+    #   classic  – un accordo per battuta (4/4) con le note a indice pari (0,2,4,…)
+    #   onbeat   – due accordi per battuta (2/4 ciascuno):
+    #                1° accordo: note a indice pari  (0,2,4,…)
+    #                2° accordo: note a indice dispari (1,3,5,…)
+    #   offbeat  – due accordi per battuta (2/4 ciascuno):
+    #                1° accordo: note a indice dispari (1,3,5,…)
+    #                2° accordo: note a indice pari  (0,2,4,…)
+
+    left = stream.Part()
+
+    # raccoglie gli elementi con il loro offset cumulativo
+    elements = list(s.flatten().notesAndRests)
+
+    # numero di misure (arrotonda per eccesso)
+    total_beats = sum(el.duration.quarterLength for el in elements)
+    num_measures = int(total_beats // beats_per_measure)
+    if total_beats % beats_per_measure > 0:
+        num_measures += 1
+
+    # bucket per misura
+    buckets = [[] for _ in range(num_measures)]
+    offset = 0.0
+    for el in elements:
+        if isinstance(el, note.Note):
+            measure_idx = int(offset // beats_per_measure)
+            if measure_idx < num_measures:
+                buckets[measure_idx].append(copy.deepcopy(el))
+        offset += el.duration.quarterLength
+
+    for bucket in buckets:
+        if not bucket:
+            r = note.Rest()
+            r.duration.quarterLength = beats_per_measure
+            left.append(r)
+            continue
+
+        # ordina per altezza MIDI crescente
+        bucket.sort(key=lambda n: n.pitch.midi)
+
+        even_idx = list(range(0, len(bucket), 2))   # indici pari:   0,2,4,…
+        odd_idx  = list(range(1, len(bucket), 2))   # indici dispari: 1,3,5,…
+
+        if harmony_type == "classic":
+            # un accordo intero per battuta, note a indici pari
+            chord_notes = _make_chord_notes(bucket, even_idx)
+            Cx = chord.Chord(chord_notes)
+            Cx.duration.quarterLength = beats_per_measure
+            left.append(Cx)
+
+        elif harmony_type == "onbeat":
+            # 1° metà: note pari  –  2° metà: note dispari
+            even_notes = _make_chord_notes(bucket, even_idx)
+            odd_notes  = _make_chord_notes(bucket, odd_idx) if odd_idx else _make_chord_notes(bucket, even_idx)
+            C1 = chord.Chord(even_notes)
+            C1.duration.quarterLength = beats_per_measure / 2
+            left.append(C1)
+            C2 = chord.Chord(odd_notes)
+            C2.duration.quarterLength = beats_per_measure / 2
+            left.append(C2)
+
+        elif harmony_type == "offbeat":
+            # 1° metà: note dispari (1,3,5,…)  –  2° metà: note pari (0,2,4,…)
+            even_notes = _make_chord_notes(bucket, even_idx)
+            odd_notes  = _make_chord_notes(bucket, odd_idx) if odd_idx else _make_chord_notes(bucket, even_idx)
+            C1 = chord.Chord(odd_notes)
+            C1.duration.quarterLength = beats_per_measure / 2
+            left.append(C1)
+            C2 = chord.Chord(even_notes)
+            C2.duration.quarterLength = beats_per_measure / 2
+            left.append(C2)
 
     return left

@@ -4,13 +4,17 @@ from music21 import *
 import tempfile
 import os
 from sequenza import genera_sequenza
-from armonia import genera_armonia
+from armonia import genera_armonia, genera_armonia_coppie
 import copy
+from centra import centra_stream
 
 app = Flask(__name__)
 
 CORS(app, origins=[
+    "http://localhost:5000",
     "http://localhost:8000",
+    "http://127.0.0.1:5000",
+    "null",  # ← per file aperti da file:// nel browser
     "https://murosigma.it",
     "https://www.murosigma.it",
     "https://marcobittelli.it",
@@ -22,23 +26,30 @@ last_stream = None
 last_params = None
 access_count = 0
 
-
 def generate_music(start_note, sequence_type, tempo_type, harmony, harmony_type, ottave, bass_clef, bpm=100,
                    note_length=1,
                    interval=3, leap=-1,
                    interval1=3, leap1=3,
                    interval2=6, leap2=-2,
-                   int1=1,lea1=3,int2=-2,lea2=5,int3=3,lea3=-7):
+                   int1=1,lea1=3,int2=-2,lea2=5,int3=3,lea3=-7,
+                   inter1=3, inter2=3, inter3=6,
+                   multi_values=None):
 
-    s = genera_sequenza(sequence_type,tempo_type, note_length,
-        interval,leap,
+    s = genera_sequenza(sequence_type, tempo_type, note_length,
+        interval, leap,
         interval1, leap1,
         interval2, leap2,
         int1, lea1, int2, lea2, int3, lea3,
-        ottave, bass_clef, start_note, harmony, harmony_type)
+        inter1, inter2, inter3,
+        ottave, bass_clef, start_note, harmony, harmony_type,
+        multi_values=multi_values)
 
-    if harmony and (tempo_type=="sequence-constrained" or tempo_type=="constant"):
-        left = genera_armonia(sequence_type,harmony_type,s)
+    if harmony and (tempo_type in ("sequence-constrained", "constant", "length-constrained", "free")):
+        if tempo_type in ("sequence-constrained", "constant"):
+            left = genera_armonia(sequence_type, harmony_type, s,
+                                      multi_k=len(multi_values) if multi_values else None)
+        else:
+            left = genera_armonia_coppie(s)
         # right hand
         right = stream.Part()
         for el in s:
@@ -54,7 +65,7 @@ def generate_music(start_note, sequence_type, tempo_type, harmony, harmony_type,
         if remainder != 0:
             missing = measure_duration - remainder
             right.append(note.Rest(quarterLength=missing))
-        
+
         left.insert(0, instrument.Piano())
         left.insert(0, clef.BassClef())
         # calcola lunghezza pausa rigo inferiore
@@ -129,8 +140,12 @@ def invert_stream(s):
 
 def retrograde_stream(s):
     new_stream = s.__class__()
+
+    # # DEBUG input
+    # input_names = [el.nameWithOctave for el in s.flatten().notesAndRests if isinstance(el, note.Note)]
+    # print("[retrograde_stream INPUT]", input_names)
  
-    elements = list(s.flat.notesAndRests)
+    elements = list(s.flatten().notesAndRests)
  
     if not elements:
         return new_stream
@@ -141,9 +156,9 @@ def retrograde_stream(s):
         final_rest = elements[-1]
         elements = elements[:-1]
     
-    # escludi anche l'ultima nota (sempre uguale alla prima)
-    last_note = elements[-1]
-    elements = elements[:-1]
+    # # escludi anche l'ultima nota (sempre uguale alla prima)
+    # last_note = elements[-1]
+    # elements = elements[:-1]
  
     # inverti ordine degli elementi musicali (senza la pausa finale)
     elements.reverse()
@@ -154,13 +169,17 @@ def retrograde_stream(s):
         new_stream.insert(offset, new_el)
         offset += new_el.duration.quarterLength
 
-     # reinserisci l'ultima nota invariata
-    new_stream.insert(offset, copy.deepcopy(last_note))
-    offset += last_note.duration.quarterLength
+    #  # reinserisci l'ultima nota invariata
+    # new_stream.insert(offset, copy.deepcopy(last_note))
+    # offset += last_note.duration.quarterLength
  
     # riaggiungi la pausa finale invariata in coda
     if final_rest is not None:
         new_stream.insert(offset, copy.deepcopy(final_rest))
+
+    # # DEBUG
+    # output_names = [el.nameWithOctave for el in new_stream.recurse() if isinstance(el, note.Note)]
+    # print("[retrograde_stream OUTPUT]", output_names)
 
     return new_stream
 
@@ -429,6 +448,10 @@ def generate_midi():
 
     data = request.json
 
+    # Multidimensional: lista di K interi
+    raw_multi = data.get("multi_values", [])
+    multi_values = [int(v) for v in raw_multi] if raw_multi else None
+
     s = generate_music(
         data.get("start_note"),
         data.get("sequence_type"),
@@ -450,7 +473,11 @@ def generate_midi():
         data.get("int2", 0),
         data.get("lea2", 0),
         data.get("int3", 0),
-        data.get("lea3", 0)
+        data.get("lea3", 0),
+        data.get("inter1", 0),
+        data.get("inter2", 0),
+        data.get("inter3", 0),
+        multi_values=multi_values
     )
 
     # salva la sequenza reale (fondamentale)
@@ -476,9 +503,78 @@ def generate_score():
 
     return send_file(tmp.name, mimetype="application/xml")
 
+@app.route("/import", methods=["POST"])
+def import_midi():
+    global last_stream, last_params
+
+    if "midi" not in request.files:
+        return {"error": "No MIDI file provided"}, 400
+
+    f = request.files["midi"]
+
+    # Salva il file MIDI in un temporaneo
+    tmp_mid = tempfile.NamedTemporaryFile(suffix=".mid", delete=False)
+    f.save(tmp_mid.name)
+
+    # Carica con music21
+    s = converter.parse(tmp_mid.name)
+
+    # Rimuove indicazioni di tempo (metronomo) dal MIDI importato
+    for el in s.recurse().getElementsByClass('MetronomeMark'):
+        el.activeSite.remove(el)
+
+    # Quantizza le durate per evitare valori float strani da DAW
+    # (sui MIDI generati da GeCo non serve, ma è una protezione utile)
+    s = s.quantize(quarterLengthDivisors=(4, 3))
+
+    # Aggiunge metadati minimi se assenti
+    if s.metadata is None:
+        s.insert(0, metadata.Metadata())
+        s.metadata.title = ""
+        s.metadata.composer = ""
+        s.insert(0, instrument.Piano())
+    else:
+        s.metadata.title = ""
+        s.metadata.composer = ""
+
+    # Aggiunge chiave di Do se assente
+    if not s.flatten().getElementsByClass(key.Key):
+        s.insert(0, key.Key('C'))
+
+    # Salva come last_stream (le trasformazioni lavoreranno su questo)
+    last_stream = copy.deepcopy(s)
+
+    # last_params: legge i parametri passati dal frontend
+    last_params = {
+        "tempo": request.form.get("tempo", "constant"),
+        "sequence_type": request.form.get("sequence_type", "Binary"),
+        "harmony_type": request.form.get("harmony_type", "classic")
+    }
+
+    # Restituisce il MusicXML per OSMD (stesso percorso di /score)
+    tmp_xml = tempfile.NamedTemporaryFile(suffix=".musicxml", delete=False)
+    last_stream.write("musicxml", fp=tmp_xml.name)
+
+    return send_file(tmp_xml.name, mimetype="application/xml")
+
+
+def rigenera_armonia(melody):
+    tempo_type = last_params.get("tempo")
+    if tempo_type in ("sequence-constrained", "constant"):
+        raw_multi = last_params.get("multi_values", [])
+        multi_k = len(raw_multi) if raw_multi else None
+        return genera_armonia(
+            last_params.get("sequence_type"),
+            last_params.get("harmony_type"),
+            melody,
+            multi_k=multi_k
+        )
+    else:
+        return genera_armonia_coppie(melody)
+
 @app.route("/transform", methods=["POST"])
 
-def invert_sequence():
+def transform_sequence():
     global last_stream
 
     if last_stream is None:
@@ -500,11 +596,7 @@ def invert_sequence():
             transposed_melody = right.transpose(valore)
 
             # 2. rigenera armonia
-            new_left = genera_armonia(
-                last_params.get("sequence_type"),
-                last_params.get("harmony_type"),
-                transposed_melody
-            )
+            new_left = rigenera_armonia(transposed_melody)
             
             # 3. ricostruisci score
             new_score = stream.Score()
@@ -549,14 +641,11 @@ def invert_sequence():
 
             # 1. inverti melodia
             inverted_melody = invert_stream(right)
+            inverted_melody = centra_stream(inverted_melody)
             inverted_melody.clef = clef.TrebleClef()
 
             # 2. rigenera armonia
-            new_left = genera_armonia(
-                last_params.get("sequence_type"),
-                last_params.get("harmony_type"),
-                inverted_melody
-            )
+            new_left = rigenera_armonia(inverted_melody)
             
             # 3. ricostruisci score
             new_score = stream.Score()
@@ -583,6 +672,7 @@ def invert_sequence():
         # 🎼 CASO SENZA ARMONIA
         else:
             s = invert_stream(last_stream)
+            s = centra_stream(s)
             s.insert(0, key.Key('C'))
             s.insert(0, metadata.Metadata())
             s.insert(0, instrument.Piano())
@@ -602,11 +692,7 @@ def invert_sequence():
             retro_melody.clef = clef.TrebleClef()
  
             # 2. rigenera armonia
-            new_left = genera_armonia(
-                last_params.get("sequence_type"),
-                last_params.get("harmony_type"),
-                retro_melody
-            )
+            new_left = rigenera_armonia(retro_melody)
             
             # 3. ricostruisci score
             new_score = stream.Score()
@@ -649,14 +735,11 @@ def invert_sequence():
 
             # 👇 QUI va la tua riga
             retro_inverted = retrograde_stream(invert_stream(right))
+            retro_inverted = centra_stream(retro_inverted)
             retro_inverted.clef = clef.TrebleClef()
 
             # rigenera armonia
-            new_left = genera_armonia(
-                last_params.get("sequence_type"),
-                last_params.get("harmony_type"),
-                retro_inverted
-            )
+            new_left = rigenera_armonia(retro_inverted)
 
             # ricostruzione score
             new_score = stream.Score()
@@ -678,6 +761,7 @@ def invert_sequence():
         else:
             # 👇 stesso punto anche qui
             s = retrograde_stream(invert_stream(last_stream))
+            s = centra_stream(s)
 
             s.insert(0, key.Key('C'))
             s.insert(0, metadata.Metadata())
@@ -699,11 +783,7 @@ def invert_sequence():
             shifted_melody.clef = clef.TrebleClef() 
 
             # 2. rigenera armonia
-            new_left = genera_armonia(
-                last_params.get("sequence_type"),
-                last_params.get("harmony_type"),
-                shifted_melody
-            )
+            new_left = rigenera_armonia(shifted_melody)
             
             # 3. ricostruisci score
             new_score = stream.Score()
@@ -749,11 +829,7 @@ def invert_sequence():
             inverted_melody.clef = clef.TrebleClef()
 
             # 2. rigenera armonia
-            new_left = genera_armonia(
-                last_params.get("sequence_type"),
-                last_params.get("harmony_type"),
-                inverted_melody
-            )
+            new_left = rigenera_armonia(inverted_melody)
             
             # 3. ricostruisci score
             new_score = stream.Score()
@@ -799,11 +875,7 @@ def invert_sequence():
             r_retro_melody.clef = clef.TrebleClef()
 
             # 2. rigenera armonia
-            new_left = genera_armonia(
-                last_params.get("sequence_type"),
-                last_params.get("harmony_type"),
-                r_retro_melody
-            )
+            new_left = rigenera_armonia(r_retro_melody)
             
             # 3. ricostruisci score
             new_score = stream.Score()
@@ -848,11 +920,7 @@ def invert_sequence():
             shifted_melody.clef = clef.TrebleClef()
 
             # 2. rigenera armonia
-            new_left = genera_armonia(
-                last_params.get("sequence_type"),
-                last_params.get("harmony_type"),
-                shifted_melody
-            )
+            new_left = rigenera_armonia(shifted_melody)
             
             # 3. ricostruisci score
             new_score = stream.Score()
@@ -899,5 +967,5 @@ def health():
     return {"status": "ok"}, 200
 
 
-port = int(os.environ.get("PORT", 10000))
+port = int(os.environ.get("PORT", 5000))
 app.run(host="0.0.0.0", port=port)
