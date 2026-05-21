@@ -1,16 +1,22 @@
 import random
 from music21 import *
 import copy
+from utility import f_octave,f_durata
 
-def f_octave(x, ottave, oct):
-    if (ottave == 1) and (x.octave >= (oct+2)):
-        x.octave=oct
-    elif (ottave == 2) and (x.octave >= (oct+3)):
-        x.octave = oct
+# def f_octave(x, ottave, oct):
+#     oct_max = oct + ottave  # ottava massima consentita
 
-def f_durata(x):
-    # x.duration.quarterLength = random.choice([1, 1/2, 1/4])
-    x.duration.quarterLength = random.choice([1, 1/2, 1/4])
+#     # Correggi se troppo alta
+#     while x.octave > oct_max:
+#         x.octave -= 1
+
+#     # Correggi se troppo bassa
+#     while x.octave < oct:
+#         x.octave += 1
+
+# def f_durata(x):
+#     # x.duration.quarterLength = random.choice([1, 1/2, 1/4])
+#     x.duration.quarterLength = random.choice([1, 1/2, 1/4])
 
 def make_chord_with_min_third(A, B):
     # calcola distanza in semitoni (melodica A → B)
