@@ -20,11 +20,12 @@ from utility import f_octave,f_durata
 
 def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note,harmony,harmony_type):
     x = note.Note(starting_note)
+    x.octave = 4
 
-    if starting_note <= 6:
-        x.octave = 4
-    else:
-        x.octave = 3
+    # if starting_note <= 6:
+    #     x.octave = 4
+    # else:
+    #     x.octave = 3
 
     oct = x.octave
 

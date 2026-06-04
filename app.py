@@ -480,6 +480,31 @@ def generate_midi():
         multi_values=multi_values
     )
 
+    # applica il range pitch impostato dallo slider
+    midi_min = data.get("midi_min", None)
+    midi_max = data.get("midi_max", None)
+    if midi_min is not None and midi_max is not None:
+        if isinstance(s, stream.Score):
+            # centra solo la melodia (mano destra, parts[0])
+            parts = list(s.parts)
+            centered_melody = centra_stream(parts[0], midi_min, midi_max)
+            centered_melody.clef = clef.TrebleClef()
+            new_score = stream.Score()
+            new_score.insert(0, centered_melody)
+            for p in parts[1:]:
+                new_score.insert(0, p)
+            new_score.insert(0, metadata.Metadata())
+            new_score.metadata.title = ""
+            new_score.metadata.composer = ""
+            s = new_score
+        else:
+            s = centra_stream(s, midi_min, midi_max)
+            s.insert(0, key.Key('C'))
+            s.insert(0, metadata.Metadata())
+            s.insert(0, instrument.Piano())
+            s.metadata.title = ""
+            s.metadata.composer = ""
+
     # salva la sequenza reale (fondamentale)
     last_stream = copy.deepcopy(s)
     # salva ultimi parametri
@@ -583,6 +608,8 @@ def transform_sequence():
     data = request.json
     operation = data.get("operation")
     valore = data.get("value")
+    midi_min = data.get("midi_min", None)
+    midi_max = data.get("midi_max", None)
 
     if operation == "T":
         # 🎼 CASO CON ARMONIA
@@ -641,7 +668,7 @@ def transform_sequence():
 
             # 1. inverti melodia
             inverted_melody = invert_stream(right)
-            inverted_melody = centra_stream(inverted_melody)
+            inverted_melody = centra_stream(inverted_melody, midi_min, midi_max)
             inverted_melody.clef = clef.TrebleClef()
 
             # 2. rigenera armonia
@@ -672,7 +699,7 @@ def transform_sequence():
         # 🎼 CASO SENZA ARMONIA
         else:
             s = invert_stream(last_stream)
-            s = centra_stream(s)
+            s = centra_stream(s, midi_min, midi_max)
             s.insert(0, key.Key('C'))
             s.insert(0, metadata.Metadata())
             s.insert(0, instrument.Piano())
@@ -735,7 +762,7 @@ def transform_sequence():
 
             # 👇 QUI va la tua riga
             retro_inverted = retrograde_stream(invert_stream(right))
-            retro_inverted = centra_stream(retro_inverted)
+            retro_inverted = centra_stream(retro_inverted, midi_min, midi_max)
             retro_inverted.clef = clef.TrebleClef()
 
             # rigenera armonia
@@ -761,7 +788,7 @@ def transform_sequence():
         else:
             # 👇 stesso punto anche qui
             s = retrograde_stream(invert_stream(last_stream))
-            s = centra_stream(s)
+            s = centra_stream(s, midi_min, midi_max)
 
             s.insert(0, key.Key('C'))
             s.insert(0, metadata.Metadata())

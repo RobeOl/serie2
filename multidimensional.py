@@ -40,10 +40,11 @@ def genera_multidimensional(tipo, note_len, n_K, ottave, bass_clef, starting_not
         return stream.Stream()
 
     c = note.Note(starting_note)
-    if starting_note <= 6:
-        c.octave = 4
-    else:
-        c.octave = 3
+    c.octave = 4
+    # if starting_note <= 6:
+    #     c.octave = 4
+    # else:
+    #     c.octave = 3
 
     oct = c.octave
     note1 = c

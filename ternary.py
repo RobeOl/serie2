@@ -15,11 +15,12 @@ from utility import f_octave,f_durata
 
 def genera_ternary(tipo,note_len,i,j,k,ottave,bass_clef,starting_note,harmony,harmony_type):
 	c = note.Note(starting_note)
+	c.octave = 4
 
-	if starting_note <= 6:
-		c.octave = 4
-	else:
-		c.octave = 3
+	# if starting_note <= 6:
+	# 	c.octave = 4
+	# else:
+	# 	c.octave = 3
 
 	oct = c.octave
 

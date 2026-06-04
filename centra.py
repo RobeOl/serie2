@@ -10,7 +10,11 @@ MIDI_MIN = 52   # E3
 MIDI_MAX = 88   # E6
 
 
-def centra_stream(s: stream.Part) -> stream.Part:
+def centra_stream(s: stream.Part, midi_min: int = None, midi_max: int = None) -> stream.Part:
+    if midi_min is None:
+        midi_min = MIDI_MIN
+    if midi_max is None:
+        midi_max = MIDI_MAX
     # Prende un stream.Part (es. il risultato di invert_stream) e trasla
     # nota per nota verso l'alto o verso il basso di ottave intere (multipli
     # di 12 semitoni) in modo che ogni nota ricada nell'intervallo C3–C6
@@ -44,21 +48,34 @@ def centra_stream(s: stream.Part) -> stream.Part:
 
     centered = stream.Part()
 
-    if span <= (MIDI_MAX - MIDI_MIN):
+    if span <= (midi_max - midi_min):
         shift = 0
 
-        # Prima porta il centro della melodia nel range
-        mid = (lowest + highest) // 2
-        while mid + shift < MIDI_MIN:
+        # Porta lowest dentro il range
+        while lowest + shift < midi_min:
             shift += 12
-        while mid + shift > MIDI_MAX:
+        while lowest + shift > midi_max:
             shift -= 12
 
-        # Poi aggiusta se lowest o highest sforano ancora
-        while highest + shift > MIDI_MAX:
+        # Se highest sfora in alto, scendi di ottave
+        while highest + shift > midi_max:
             shift -= 12
-        while lowest + shift < MIDI_MIN:
-            shift += 12
+
+        # Verifica che dopo l'aggiustamento lowest non sia uscito sotto:
+        # se lo è, non esiste uno shift a multipli di 12 che contenga
+        # entrambi gli estremi → fallback a correzione per nota (Caso 2).
+        if lowest + shift < midi_min:
+            for el in s.recurse(classFilter=('Note', 'Rest')):
+                new_el = copy.deepcopy(el)
+                if isinstance(new_el, note.Note):
+                    m = new_el.pitch.midi
+                    while m < midi_min:
+                        m += 12
+                    while m > midi_max:
+                        m -= 12
+                    new_el.pitch.midi = m
+                centered.append(new_el)
+            return centered
 
         for el in s.recurse(classFilter=('Note', 'Rest')):
             new_el = copy.deepcopy(el)
@@ -75,9 +92,9 @@ def centra_stream(s: stream.Part) -> stream.Part:
             new_el = copy.deepcopy(el)
             if isinstance(new_el, note.Note):
                 m = new_el.pitch.midi
-                while m < MIDI_MIN:
+                while m < midi_min:
                     m += 12
-                while m > MIDI_MAX:
+                while m > midi_max:
                     m -= 12
                 new_el.pitch.midi = m
             centered.append(new_el)
