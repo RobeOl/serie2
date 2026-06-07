@@ -20,7 +20,7 @@ from utility import f_octave,f_durata
 def genera_binary(tipo,note_len,i,j,ottave,bass_clef,starting_note,harmony,harmony_type):
 	c = note.Note(starting_note)
 
-	if starting_note <= 6:
+	if starting_note <= 7:
 		c.octave = 4
 	else:
 		c.octave = 3
