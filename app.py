@@ -33,7 +33,8 @@ def generate_music(start_note, sequence_type, tempo_type, harmony, harmony_type,
                    interval2=6, leap2=-2,
                    int1=1,lea1=3,int2=-2,lea2=5,int3=3,lea3=-7,
                    inter1=3, inter2=3, inter3=6,
-                   multi_values=None):
+                   multi_values=None,
+                   discard_closure=False):
 
     s = genera_sequenza(sequence_type, tempo_type, note_length,
         interval, leap,
@@ -41,15 +42,17 @@ def generate_music(start_note, sequence_type, tempo_type, harmony, harmony_type,
         interval2, leap2,
         int1, lea1, int2, lea2, int3, lea3,
         inter1, inter2, inter3,
-        ottave, bass_clef, start_note, harmony, harmony_type,
-        multi_values=multi_values)
+        ottave, bass_clef, start_note,
+        multi_values=multi_values,
+        discard_closure=discard_closure)
 
     if harmony and (tempo_type in ("sequence-constrained", "constant", "length-constrained", "free")):
         if tempo_type in ("sequence-constrained", "constant"):
             left = genera_armonia(sequence_type, harmony_type, s,
-                                      multi_k=len(multi_values) if multi_values else None)
+                                      multi_k=len(multi_values) if multi_values else None,
+                                      discard_closure=discard_closure)
         else:
-            left = genera_armonia_coppie(s)
+            left = genera_armonia_coppie(s, discard_closure=discard_closure)
         # right hand
         right = stream.Part()
         for el in s:
@@ -477,7 +480,8 @@ def generate_midi():
         data.get("inter1", 0),
         data.get("inter2", 0),
         data.get("inter3", 0),
-        multi_values=multi_values
+        multi_values=multi_values,
+        discard_closure=bool(data.get("discard_closure", False))
     )
 
     # applica il range pitch impostato dallo slider

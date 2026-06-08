@@ -4,18 +4,7 @@ import copy
 from utility import f_octave,f_durata
 
 
-# def f_octave(x, ottave, oct):
-#     if (ottave == 1) and (x.octave >= (oct + 2)):
-#         x.octave = oct
-#     elif (ottave == 2) and (x.octave >= (oct + 3)):
-#         x.octave = oct
-
-
-# def f_durata(x):
-#     x.duration.quarterLength = random.choice([1, 1/2, 1/4])
-
-
-def genera_multidimensional(tipo, note_len, n_K, ottave, bass_clef, starting_note, harmony, harmony_type):
+def genera_multidimensional(tipo, note_len, n_K, ottave, bass_clef, starting_note,discard_closure=False):
     # Genera una sequenza Multidimensionale con K intervalli per ciclo.
 
     # Parametri
@@ -26,10 +15,8 @@ def genera_multidimensional(tipo, note_len, n_K, ottave, bass_clef, starting_not
     # ottave         : int   – 1 → 1 ottava, 2 → 2 ottave
     # bass_clef      : bool  – trasponi 2 ottave sotto e usa chiave di basso
     # starting_note  : int   – pitch-class 0-11 (0=C, 1=C#, …, 11=B)
-    # harmony        : bool  – riservato per coerenza con gli altri generatori
-    # harmony_type   : str   – riservato per coerenza con gli altri generatori
 
-    # Logica (da qualsiasi.py)
+    # Logica
     # ------------------------
     # La sequenza parte dalla nota iniziale, applica K trasposizioni
     # consecutive (un ciclo), poi ripete finché il pitch-class corrente
@@ -151,6 +138,10 @@ def genera_multidimensional(tipo, note_len, n_K, ottave, bass_clef, starting_not
 
     # ── costruzione stream ───────────────────────────────────────────────────
     melody = stream.Stream()
+
+    # remove cycle closure
+    if discard_closure:
+        notes.pop()
 
     if bass_clef:
         melody.insert(0, clef.BassClef())

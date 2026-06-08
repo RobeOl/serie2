@@ -3,21 +3,8 @@ import random
 import copy
 from utility import f_octave,f_durata
 
-# def f_octave(x, ottave, oct):
-#     oct_max = oct + ottave  # ottava massima consentita
 
-#     # Correggi se troppo alta
-#     while x.octave > oct_max:
-#         x.octave -= 1
-
-#     # Correggi se troppo bassa
-#     while x.octave < oct:
-#         x.octave += 1
-
-# def f_durata(x):
-#     x.duration.quarterLength = random.choice([1, 1/2, 1/4])
-
-def genera_binary(tipo,note_len,i,j,ottave,bass_clef,starting_note,harmony,harmony_type):
+def genera_binary(tipo,note_len,i,j,ottave,bass_clef,starting_note,discard_closure=False):
 	c = note.Note(starting_note)
 
 	if starting_note <= 7:
@@ -45,9 +32,6 @@ def genera_binary(tipo,note_len,i,j,ottave,bass_clef,starting_note,harmony,harmo
 		seconda = note1.name
 		first_couple = [prima,seconda]
 	
-		#print('FIRST: ',first_couple)
-
-
 		condition = True
 		# following leaps/intervals
 		while condition: 
@@ -64,8 +48,7 @@ def genera_binary(tipo,note_len,i,j,ottave,bass_clef,starting_note,harmony,harmo
 		
 			current_couple = [prima,seconda]
 			condition = (current_couple!=first_couple)
-			#print(current_couple)
-	
+			
 	elif tipo=="length-constrained":
 		# length-constrained
 		conta = 1
@@ -86,9 +69,6 @@ def genera_binary(tipo,note_len,i,j,ottave,bass_clef,starting_note,harmony,harmo
 		notes.append(copy.deepcopy(note1))
 		seconda = note1.name
 		first_couple = [prima,seconda]
-	
-		#print('FIRST: ',first_couple)
-
 
 		condition = True
 		# following leaps/intervals
@@ -115,8 +95,7 @@ def genera_binary(tipo,note_len,i,j,ottave,bass_clef,starting_note,harmony,harmo
 		
 			current_couple = [prima,seconda]
 			condition = (current_couple!=first_couple)
-			#print(current_couple)
-
+			
 	elif tipo=="constant":
 		# constant
 		c.duration.quarterLength = note_len
@@ -128,9 +107,6 @@ def genera_binary(tipo,note_len,i,j,ottave,bass_clef,starting_note,harmony,harmo
 		notes.append(copy.deepcopy(note1))
 		seconda = note1.name
 		first_couple = [prima,seconda]
-	
-		#print('FIRST: ',first_couple)
-
 
 		condition = True
 		# following leaps/intervals
@@ -147,8 +123,7 @@ def genera_binary(tipo,note_len,i,j,ottave,bass_clef,starting_note,harmony,harmo
 		
 			current_couple = [prima,seconda]
 			condition = (current_couple!=first_couple)
-			#print(current_couple)
-
+			
 	else:
 		# free
 		f_durata(note1)
@@ -162,9 +137,6 @@ def genera_binary(tipo,note_len,i,j,ottave,bass_clef,starting_note,harmony,harmo
 		seconda = note1.name
 		first_couple = [prima,seconda]
 	
-		#print('FIRST: ',first_couple)
-
-
 		condition = True
 		# following leaps/intervals
 		while condition: 
@@ -182,12 +154,13 @@ def genera_binary(tipo,note_len,i,j,ottave,bass_clef,starting_note,harmony,harmo
 		
 			current_couple = [prima,seconda]
 			condition = (current_couple!=first_couple)
-			#print(current_couple)
-
+			
 	melody = stream.Stream()
-
 	# remove last element
 	notes.pop()
+	# remove cycle closure
+	if discard_closure:
+		notes.pop()
 	if bass_clef:
 		melody.insert(0, clef.BassClef())
 		melody.append(notes)

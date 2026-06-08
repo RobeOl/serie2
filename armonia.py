@@ -35,7 +35,7 @@ def add_final_chord(left, notes, N):
     left.append(Cf)
 
 
-def genera_armonia_coppie(s):
+def genera_armonia_coppie(s, discard_closure=False):
     # Armonizzazione per coppie consecutive, indipendente da seq_type e harmony_type.
     # Usata per tempo free e length-constrained.
     left = stream.Part()
@@ -64,7 +64,7 @@ def genera_armonia_coppie(s):
 
     # bicordo finale: ultima nota una e due ottave sotto
     # bicordo finale solo se le note sono in numero dispari
-    if N % 2 == 0:
+    if not discard_closure and N % 2 == 0:
         add_final_chord(left, notes, N)
 
     # pausa per completare l'ultima battuta
@@ -73,7 +73,7 @@ def genera_armonia_coppie(s):
     return left
 
 
-def genera_armonia(seq_type, harmony_type, s, multi_k=None):
+def genera_armonia(seq_type, harmony_type, s, multi_k=None, discard_closure=False):
     # caso binary
     if seq_type == "Binary":
         left = stream.Part()
@@ -101,7 +101,8 @@ def genera_armonia(seq_type, harmony_type, s, multi_k=None):
             nn = nn + 2
 
         # bicordo finale: ultima nota una e due ottave sotto
-        add_final_chord(left, notes, N)
+        if not discard_closure:
+            add_final_chord(left, notes, N)
 
         # pausa per completare l'ultima battuta
         fill_to_measure(left)
@@ -181,7 +182,8 @@ def genera_armonia(seq_type, harmony_type, s, multi_k=None):
                 nn = nn + 4
             
         # bicordo finale: ultima nota una e due ottave sotto
-        add_final_chord(left, notes, N)
+        if not discard_closure:
+            add_final_chord(left, notes, N)
 
         # pausa per completare l'ultima battuta
         fill_to_measure(left)
@@ -274,7 +276,8 @@ def genera_armonia(seq_type, harmony_type, s, multi_k=None):
                 nn = nn + 6
 
         # bicordo finale: ultima nota una e due ottave sotto
-        add_final_chord(left, notes, N)
+        if not discard_closure:
+            add_final_chord(left, notes, N)
 
         # pausa per completare l'ultima battuta
         fill_to_measure(left)
@@ -355,7 +358,8 @@ def genera_armonia(seq_type, harmony_type, s, multi_k=None):
                 nn = nn+3
                 
         # bicordo finale: ultima nota una e due ottave sotto
-        add_final_chord(left, notes, N)
+        if not discard_closure:
+            add_final_chord(left, notes, N)
 
         # pausa per completare l'ultima battuta
         fill_to_measure(left)
@@ -447,7 +451,8 @@ def genera_armonia(seq_type, harmony_type, s, multi_k=None):
                 nn += K
 
         # bicordo finale
-        add_final_chord(left, notes, N)
+        if not discard_closure:
+            add_final_chord(left, notes, N)
         fill_to_measure(left)
 
     return left

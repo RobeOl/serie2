@@ -3,17 +3,8 @@ import random
 import copy
 from utility import f_octave,f_durata
 
-# def f_octave(x, ottave, oct):
-#     if (ottave == 1) and (x.octave >= (oct+2)):
-#         x.octave=oct
-#     elif (ottave == 2) and (x.octave >= (oct+3)):
-#         x.octave = oct
 
-
-# def f_durata(x):
-#     x.duration.quarterLength = random.choice([1, 1/2, 1/4])
-
-def genera_ternary(tipo,note_len,i,j,k,ottave,bass_clef,starting_note,harmony,harmony_type):
+def genera_ternary(tipo,note_len,i,j,k,ottave,bass_clef,starting_note,discard_closure=False):
 	c = note.Note(starting_note)
 	c.octave = 4
 
@@ -232,6 +223,10 @@ def genera_ternary(tipo,note_len,i,j,k,ottave,bass_clef,starting_note,harmony,ha
 			condition = (current_note!=first_note)
 
 	melody = stream.Stream()
+
+	# remove last element (equals the first: cycle closure)
+	if discard_closure:
+		notes.pop()
 
 	# end of procedure
 	if bass_clef:

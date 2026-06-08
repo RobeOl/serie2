@@ -3,28 +3,10 @@ from music21 import *
 import copy
 from utility import f_octave,f_durata
 
-# def f_octave(x, ottave, oct):
-#     oct_max = oct + ottave  # ottava massima consentita
-
-#     # Correggi se troppo alta
-#     while x.octave > oct_max:
-#         x.octave -= 1
-
-#     # Correggi se troppo bassa
-#     while x.octave < oct:
-#         x.octave += 1
-
-# def f_durata(x):
-#     # x.duration.quarterLength = random.choice([1, 1/2, 1/4])
-#     x.duration.quarterLength = random.choice([1, 1/2, 1/4])
 
 def make_chord_with_min_third(A, B):
     # calcola distanza in semitoni (melodica A → B)
     semitones = interval.Interval(A, B).semitones
-
-    # # se inferiore a 3 semitoni (terza minore)
-    # if abs(semitones) < 3:
-    #     B = B.transpose(12)  # alza B di un'ottava
     
     # se inferiore a 3 semitoni (terza minore)
     if abs(semitones) < 3:
@@ -32,7 +14,7 @@ def make_chord_with_min_third(A, B):
 
     return chord.Chord([A, B])
 
-def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,harmony,harmony_type):
+def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,discard_closure=False):
     x = note.Note(starting_note)
     x.octave=4
 
@@ -60,8 +42,6 @@ def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,har
         notes.append(copy.deepcopy(note1))
         seconda = note1.name
         first_couple = [prima,seconda]
-
-        # print('FIRST: ',first_couple)
 
         # first jump
         note1.transpose(j,inPlace=True)
@@ -119,8 +99,7 @@ def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,har
             seconda = note1.name
             current_couple = [prima,seconda]
             condition = (current_couple!=first_couple)
-            # print('CURRENT: ',current_couple)
-
+            
     elif tipo=="length-constrained":
         # length-constrained
         conta = 1
@@ -136,9 +115,7 @@ def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,har
         notes.append(copy.deepcopy(note1))
         seconda = note1.name
         first_couple = [prima,seconda]
-
-        # print('FIRST: ',first_couple)
-
+        
         # first jump
         note1.transpose(j,inPlace=True)
         f_octave(note1,ottave, oct)
@@ -238,8 +215,7 @@ def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,har
             seconda = note1.name
             current_couple = [prima,seconda]
             condition = (current_couple!=first_couple)
-            # print('CURRENT: ',current_couple)
-
+            
     elif tipo=="constant":
         # constant 
         x.duration.quarterLength = note_len
@@ -251,8 +227,6 @@ def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,har
         notes.append(copy.deepcopy(note1))
         seconda = note1.name
         first_couple = [prima,seconda]
-
-        # print('FIRST: ',first_couple)
 
         # first jump
         note1.transpose(j,inPlace=True)
@@ -310,7 +284,6 @@ def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,har
             seconda = note1.name
             current_couple = [prima,seconda]
             condition = (current_couple!=first_couple)
-            #print('CURRENT: ',current_couple)
 
     else:
         # free 
@@ -323,8 +296,6 @@ def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,har
         notes.append(copy.deepcopy(note1))
         seconda = note1.name
         first_couple = [prima,seconda]
-
-        # print('FIRST: ',first_couple)
 
         # first jump
         note1.transpose(j,inPlace=True)
@@ -386,12 +357,15 @@ def genera_quaternary(tipo,note_len,i,j,ii,jj,ottave,bass_clef,starting_note,har
             seconda = note1.name
             current_couple = [prima,seconda]
             condition = (current_couple!=first_couple)
-            #print('CURRENT: ',current_couple)
-        
 
     melody = stream.Stream()
     # remove last element
     notes.pop()
+    # remove cycle closure
+    if discard_closure:
+        notes.pop()
+
+
     if bass_clef:
         melody.insert(0, clef.BassClef())
         melody.append(notes)
