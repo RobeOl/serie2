@@ -1,0 +1,3049 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>From Interval Matrix to Score: A Generative Compositional Framework</title>
+
+<script src="https://unpkg.com/tone"></script>
+<script src="https://unpkg.com/@tonejs/midi"></script>
+<script src="https://unpkg.com/soundfont-player/dist/soundfont-player.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay/build/opensheetmusicdisplay.min.js"></script>
+
+<style>
+
+    body{
+        font-family:Arial;
+        background:#f4f6f8;
+        /*position:fixed;*/
+        top:0;
+        left:0;
+        width:100%;
+        background:#3498db;
+        text-align:center;
+        padding:10px;
+        z-index:9999;
+        font-weight:bold;
+    }
+
+.container{
+    width:1200px;
+    margin:30px auto;
+    background:white;
+    padding:25px;
+    border-radius:10px;
+}
+
+button{
+    width:100%;
+    padding:10px;
+    margin-top:10px;
+    border:none;
+    border-radius:8px;
+    background:#3498db;
+    color:white;
+    cursor:pointer;
+}
+
+button:hover{
+    opacity:0.9;
+}
+
+/* Play + Stop affiancati */
+.button-row{
+    display:flex;
+    gap:10px;
+}
+
+.button-row button{
+    flex:1;
+}
+
+/* Reset rosso */
+.reset-btn{
+    width:120px;
+    background-color:#e74c3c;
+    margin-top:10px;
+}
+
+.reset-btn:hover{
+    background-color:#c0392b;
+}
+
+#score{
+    margin-top:30px;
+    border:1px solid #ccc;
+    padding:10px;
+    overflow:hidden;
+}
+
+</style>
+
+
+<style>
+
+.testo_interval {
+  height: 30px;
+  position: absolute;
+  top: 200px;
+  right: 50px;
+  color: yellow;
+  background-color: rgb(36, 13, 240);
+  padding: 5px 25px;
+}
+
+.transformation-box {
+    border: 2px solid #ccc;
+    background-color: #ccc;
+    border-radius: 8px;
+    padding: 10px 12px 12px;
+    display: inline-block;
+    margin-top: 6px;   
+}
+
+.transformation-box .label {
+    font-weight: bold;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.operator-row button {
+    margin-right: 5px;
+}
+
+.operator-row button:last-child {
+    margin-right: 0;
+}
+    .operator-row {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .operator-row button {
+        width: 60px;
+        padding: 6px 8px;
+        background-color: #4444ff;
+        border: 1px solid #5555ff;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .operator-row button:hover {
+        background-color: #eed890;
+    }
+
+.rythm_transformation-box {
+    border: 2px solid #caa;
+    background-color: #fcc;
+    border-radius: 8px;
+    padding: 10px 12px 12px;
+    display: inline-block;
+    margin-top: 6px;   
+    margin-left: 10px;
+}
+
+.rythm_transformation-box .label {
+    font-weight: bold;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+/* ── Pitch-Class Circle ── */
+#pcCircleWrap {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 260px;
+    height: 260px;
+}
+#pcCircle {
+    overflow: visible;
+}
+
+.operator2-row button {
+    margin-right: 5px;
+}
+
+.operator2-row button:last-child {
+    margin-right: 0;
+}
+    .operator2-row {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .operator2-row button {
+        width: 60px;
+        padding: 6px 8px;
+        background-color: #aa00ff;
+        border: 1px solid #9900ff;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .operator2-row button:hover {
+        background-color: #eed890;
+    }
+</style>
+
+<style>
+    button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        background-color: #ddd;
+        color: #666;
+    }
+</style>
+
+<style>
+    /* ── Info button (top-left) ── */
+    #infoBtn {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        width: auto;
+        padding: 8px 14px;
+        background: #2980b9;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        z-index: 10000;
+        margin-top: 0;
+    }
+    #infoBtn:hover { background: #1a6a9a; opacity:1; }
+    
+    /* ── About modal overlay ── */
+    #aboutModal {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.65);
+        z-index: 30000;
+        align-items: center;
+        justify-content: center;
+    }
+    #aboutModal.open { display: flex; }
+    
+    #aboutBox {
+        background: white;
+        border-radius: 12px;
+        padding: 36px 40px;
+        max-width: 760px;
+        width: 90%;
+        max-height: 85vh;
+        overflow-y: auto;
+        position: relative;
+        font-size: 14px;
+        line-height: 1.7;
+        color: #222;
+        text-align: left;
+    }
+    #aboutBox h2 {
+        margin-top: 0;
+        color: #2980b9;
+        font-size: 20px;
+    }
+    #aboutBox h3 {
+        color: #3498db;
+        font-size: 15px;
+        margin-top: 20px;
+        margin-bottom: 4px;
+    }
+    #aboutBox p { margin: 6px 0 12px; }
+    #aboutBox ul { margin: 4px 0 12px; padding-left: 20px; }
+    #aboutBox li { margin-bottom: 4px; }
+    #closeAbout {
+        position: absolute;
+        top: 14px; right: 18px;
+        background: none;
+        border: none;
+        font-size: 22px;
+        cursor: pointer;
+        color: #888;
+        width: auto;
+        padding: 0;
+        margin: 0;
+        line-height: 1;
+    }
+    #closeAbout:hover { color: #333; opacity:1; }
+    
+    /* ── Docs button (top-left, below About) ── */
+    #docsBtn {
+        position: fixed;
+        top: 62px;
+        left: 20px;
+        width: auto;
+        padding: 8px 14px;
+        background: #27ae60;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        z-index: 10000;
+        margin-top: 0;
+    }
+    #docsBtn:hover { background: #1e8449; opacity:1; }
+    
+    /* ── Docs modal overlay ── */
+    #docsModal {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.65);
+        z-index: 30000;
+        align-items: center;
+        justify-content: center;
+    }
+    #docsModal.open { display: flex; }
+    
+    #docsBox {
+        background: white;
+        border-radius: 12px;
+        padding: 36px 40px;
+        max-width: 800px;
+        width: 90%;
+        max-height: 85vh;
+        overflow-y: auto;
+        position: relative;
+        font-size: 14px;
+        line-height: 1.7;
+        color: #222;
+        text-align: left;
+    }
+    #docsBox h2 {
+        margin-top: 0;
+        color: #27ae60;
+        font-size: 20px;
+    }
+    #docsBox h3 {
+        color: #1e8449;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-top: 20px;
+        margin-bottom: 8px;
+    }
+    #closeDocsBtn {
+        position: absolute;
+        top: 14px; right: 18px;
+        background: none;
+        border: none;
+        font-size: 22px;
+        cursor: pointer;
+        color: #888;
+        width: auto;
+        padding: 0;
+        margin: 0;
+        line-height: 1;
+    }
+    #closeDocsBtn:hover { color: #333; opacity:1; }
+    
+    /* ── Contextual help panel ── */
+    #helpPanel {
+        margin-top: 16px;
+        background: #eaf4fb;
+        border-left: 4px solid #3498db;
+        border-radius: 6px;
+        padding: 10px 14px;
+        font-size: 13px;
+        color: #2c3e50;
+        min-height: 38px;
+        text-align: left;
+        transition: background 0.2s;
+    }
+    #helpPanel em {
+        color: #7f8c8d;
+        font-style: italic;
+    }
+    </style>
+    
+<style>
+/* ── Interval Table Panel ── */
+.int-table-wrapper {
+    max-width: 480px;
+    margin: 0 auto;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow:
+        0 8px 24px rgba(0,0,0,0.18),
+        0 0 0 1px rgba(255,255,255,0.07);
+}
+.int-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #1f2937;
+}
+.int-table thead {
+    background: linear-gradient(135deg, #374151, #1f2937);
+}
+.int-table th {
+    padding: 7px 14px;
+    font-size: 12px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #d1d5db;
+}
+.int-table td {
+    padding: 4px 14px;
+    text-align: center;
+    font-size: 14px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    color: #f3f4f6;
+}
+.int-table tbody tr:nth-child(even) {
+    background: rgba(255,255,255,0.03);
+}
+.int-table tbody tr:hover {
+    background: rgba(99,102,241,0.18);
+    transition: background 0.18s ease;
+}
+.int-semi {
+    font-weight: 700;
+    color: #93c5fd;
+    width: 110px;
+}
+.int-interval {
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fca5a5;
+    letter-spacing: 0.04em;
+}
+.int-caption {
+    caption-side: top;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 800;
+    color: #f3f4f6;
+    background: #111827;
+    border-radius: 14px 14px 0 0;
+}
+.int-neg {
+    color: #86efac;  /* green for descending semitones */
+}
+/* subtle divider between ascending and descending halves */
+.int-table td:nth-child(3),
+.int-table th:nth-child(3) {
+    border-left: 1px solid rgba(255,255,255,0.12);
+}
+</style>
+
+
+<style>
+/* ── Custom Numpad ── */
+.np-anchor { position: relative; display: inline-block; }
+.np-fake-input {
+    display: inline-block;
+    width: 50px;
+    height: 22px;
+    line-height: 22px;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    background: white;
+    text-align: center;
+    font-size: 13px;
+    font-family: monospace;
+    cursor: pointer;
+    vertical-align: middle;
+    user-select: none;
+    box-sizing: border-box;
+    padding: 0 2px;
+    color: #222;
+}
+.np-fake-input:hover { border-color: #3498db; }
+.np-fake-input.np-open { border-color: #3498db; box-shadow: 0 0 0 2px rgba(52,152,219,0.25); }
+.np-popup {
+    display: none;
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    border: 1px solid #bbb;
+    border-radius: 10px;
+    padding: 8px;
+    z-index: 99999;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+    width: 150px;
+}
+.np-popup.np-popup-open { display: block; }
+.np-disp {
+    font-family: monospace;
+    font-size: 17px;
+    font-weight: bold;
+    text-align: right;
+    padding: 3px 8px 5px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 6px;
+    min-height: 28px;
+    color: #1a1a1a;
+    letter-spacing: 1px;
+}
+.np-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+}
+.np-key {
+    height: 34px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #f7f7f7;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .1s;
+    font-family: monospace;
+    color: #222;
+}
+.np-key:hover { background: #e8f4fd; border-color: #3498db; }
+.np-key:active { background: #d0eaf8; transform: scale(0.94); }
+.np-key-minus { font-size: 18px; color: #555; }
+.np-key-del { font-size: 16px; color: #888; }
+.np-key-ok {
+    grid-column: span 2;
+    background: #3498db;
+    color: white;
+    border-color: #2980b9;
+    font-size: 12px;
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+.np-key-ok:hover { background: #2980b9; }
+</style>
+</head>
+
+<body>
+
+
+<!-- ℹ️ INFO BUTTON -->
+<button id="infoBtn" onclick="document.getElementById('aboutModal').classList.add('open')">ℹ️ About</button>
+
+<!-- 📚 DOCS BUTTON -->
+<button id="docsBtn" onclick="document.getElementById('docsModal').classList.add('open')">📚 Docs</button>
+ 
+<!-- ℹ️ INFO BUTTON -->
+<button id="infoBtn" onclick="document.getElementById('aboutModal').classList.add('open')">ℹ️ About</button>
+
+<!-- 📚 DOCS BUTTON -->
+<button id="docsBtn" onclick="document.getElementById('docsModal').classList.add('open')">📚 Docs</button>
+
+<!-- ℹ️ ABOUT MODAL -->
+<div id="aboutModal" onclick="if(event.target===this) this.classList.remove('open')">
+  <div id="aboutBox">
+    <button id="closeAbout" onclick="document.getElementById('aboutModal').classList.remove('open')" title="Close">✕</button>
+
+    <h2>GeCo-Tool — Generative Compositional Framework</h2>
+    <h3>(See the <strong>📚 Docs</strong> button for detailed documentation and PDF resources)</h3>
+    <p>
+      GeCo-Tool is a web application for generating and exploring musical sequences derived from the
+      <strong>interval matrix</strong>: a systematic representation of all transpositions of a given
+      interval sequence, analogous to the 12-tone row matrix used in serial composition.
+      The tool is designed for composers and music theorists interested in algorithmic and
+      constraint-based melodic generation.
+    </p>
+
+    <h3>Sequence Types</h3>
+    <ul>
+      <li><strong>Binary</strong> — Each cycle alternates one <em>interval</em> and one <em>leap</em>.
+          The sequence repeats until the starting pitch-class is recovered.</li>
+      <li><strong>Quaternary</strong> — Each cycle contains two interval/leap pairs
+          (Interval1+Leap1, Interval2+Leap2), producing longer periodic structures.</li>
+      <li><strong>Senary</strong> — Three interval/leap pairs per cycle
+          (Int1+Lea1, Int2+Lea2, Int3+Lea3), yielding the richest harmonic variety.</li>
+      <li><strong>Ternary</strong> — Three consecutive intervals per cycle (the 3D equivalent of Binary),
+          with the cycle repeating until the starting pitch-class returns.</li>
+    <li><strong>Ternary</strong> — Three consecutive intervals per cycle (the 3D equivalent of Binary),
+          with the cycle repeating until the starting pitch-class returns.</li>
+    <li><strong>Multidimensional</strong> — Any number of consecutive intervals per cycle (the N-dim equivalent of Binary),
+          with the cycle repeating until the starting pitch-class returns.</li>
+    </ul>
+    <p>Intervals and leaps are expressed in <strong>semitones</strong> (positive = up, negative = down).</p>
+
+    <h3>Tempo / Rhythm Mode</h3>
+    <ul>
+      <li><strong>sequence-constrained</strong> — Duration changes occur at structurally significant
+          points of the sequence (e.g. at cycle boundaries).</li>
+      <li><strong>length-constrained</strong> — Duration changes occur every <em>N</em> notes,
+          where N is chosen randomly from {2, 3, 5, 6}.</li>
+      <li><strong>constant</strong> — All notes share the same duration, selectable from
+          whole to sixteenth note.</li>
+      <li><strong>free</strong> — Each note receives an independently randomised duration
+          (quarter, eighth or sixteenth).</li>
+    </ul>
+
+    <h3>Pitch-Class Transformations</h3>
+    <ul>
+      <li><strong>T</strong> — Transposes the melody by the selected number of semitones (−12 to +1).</li>
+      <li><strong>I</strong> — Melodic inversion: each interval is reflected around the first pitch.</li>
+      <li><strong>R</strong> — Retrograde: the sequence of pitches is reversed.</li>
+      <li><strong>RI</strong> — Retrograde-Inversion: inversion followed by retrograde.</li>
+    </ul>
+
+    <h3>Rhythmic Transformations</h3>
+    <ul>
+      <li><strong>S+</strong> — Rhythmic shift forward: the duration pattern is cyclically advanced by two steps.</li>
+      <li><strong>S−</strong> — Rhythmic shift backward: the duration pattern is cyclically retarded by two steps.</li>
+      <li><strong>I</strong> — Rhythmic inversion: durations are ranked and replaced by their complementary rank.</li>
+      <li><strong>R</strong> — Rhythmic retrograde: the sequence of durations is reversed.</li>
+    </ul>
+
+    <h3>Other Options</h3>
+    <ul>
+      <li><strong>Harmony</strong> — Adds a left-hand accompaniment on the bass clef. Three styles available:
+          <em>Classic</em> (paired notes), <em>On the beat</em>, <em>Off the beat</em>.</li>
+      <li><strong>Octaves</strong> — Constrains the melody to approximatively 1 or 2 octaves of range.</li>
+      <li><strong>Bass Clef</strong> — Transposes the output two octaves down and notates in bass clef.</li>
+      <li><strong>Metronome</strong> — When enabled, a click track sounds during playback: a stronger click on beat 1 of each bar, softer clicks on beats 2–4.</li>
+      <li><strong>Swing</strong> — When enabled, eighth notes are played with a swing feel: the off-beat eighth is delayed, creating a long-short pattern. 
+        Use the slider to set the intensity (50% = straight, 67% = full swing 2:1).</li>
+      <li><strong>BPM</strong> — Sets the playback tempo (60–240 bpm).</li>
+    </ul>
+
+    <div style="border-top:1px solid #d0e8f5; margin-top:20px; padding-top:16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <p style="margin:0; font-size:13px; color:#2980b9; flex:1;">
+        📚 For documentation and PDF resources, use the <strong>Docs</strong> button.
+      </p>
+      <button onclick="document.getElementById('aboutModal').classList.remove('open'); document.getElementById('docsModal').classList.add('open')" style="
+          display:inline-flex; align-items:center; gap:6px;
+          background:#eafaf1; border:1px solid #a9dfbf; border-radius:7px;
+          padding:8px 13px; color:#1e8449; cursor:pointer;
+          font-size:13px; font-weight:bold; width:auto; margin-top:0;">
+        📚 Open Docs
+      </button>
+      <button onclick="document.getElementById('aboutModal').classList.remove('open')" style="
+          display:inline-flex; align-items:center; gap:6px;
+          background:#f0f0f0; border:1px solid #ccc; border-radius:7px;
+          padding:8px 13px; color:#555; cursor:pointer;
+          font-size:13px; font-weight:bold; width:auto; margin-top:0;">
+        ✕ Close
+      </button>
+    </div>
+
+    <p style="margin-top:20px; font-size:12px; color:#888; text-align:right;">
+      R. Olmi &amp; M. Bittelli — Generative Compositional Tool
+    </p>
+  </div>
+</div>
+
+<!-- 📚 DOCS MODAL -->
+<div id="docsModal" onclick="if(event.target===this) this.classList.remove('open')">
+  <div id="docsBox">
+    <button id="closeDocsBtn" onclick="document.getElementById('docsModal').classList.remove('open')" title="Close">✕</button>
+
+    <h2>📚 Documentation &amp; Resources</h2>
+
+    <h3>🌐 HTML Documents</h3>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;">
+      <a href="help/GeCo-Tool-docs.html" target="_blank" style="
+          display:flex; align-items:center; gap:8px;
+          background:#eaf4fb; border:1px solid #aed6f1; border-radius:7px;
+          padding:9px 14px; text-decoration:none; color:#2980b9;
+          font-size:13px; font-weight:bold;">
+        📖 Full Documentation
+      </a>
+      <a href="help/binary_explorations.html" target="_blank" style="
+          display:flex; align-items:center; gap:8px;
+          background:#eaf4fb; border:1px solid #aed6f1; border-radius:7px;
+          padding:9px 14px; text-decoration:none; color:#2980b9;
+          font-size:13px; font-weight:bold;">
+        🔢 Binary Explorations
+      </a>
+      <a href="help/sequence_length.html" target="_blank" style="
+          display:flex; align-items:center; gap:8px;
+          background:#eaf4fb; border:1px solid #aed6f1; border-radius:7px;
+          padding:9px 14px; text-decoration:none; color:#2980b9;
+          font-size:13px; font-weight:bold;">
+        🔢 Sequence Length
+      </a>
+      <a href="help/presentation.html" target="_blank" style="
+          display:flex; align-items:center; gap:8px;
+          background:#eaf4fb; border:1px solid #aed6f1; border-radius:7px;
+          padding:9px 14px; text-decoration:none; color:#2980b9;
+          font-size:13px; font-weight:bold;">
+        📖 Presentation
+      </a>
+      <a href="help/interval_Table.html" target="_blank" style="
+          display:flex; align-items:center; gap:8px;
+          background:#eaf4fb; border:1px solid #aed6f1; border-radius:7px;
+          padding:9px 14px; text-decoration:none; color:#2980b9;
+          font-size:13px; font-weight:bold;">
+        📖 Interval Table
+      </a>
+      <a href="help/scales.html" target="_blank" style="
+          display:flex; align-items:center; gap:8px;
+          background:#eaf4fb; border:1px solid #aed6f1; border-radius:7px;
+          padding:9px 14px; text-decoration:none; color:#2980b9;
+          font-size:13px; font-weight:bold;">
+        📖 Scales
+      </a>
+      <a href="help/triadic_pairs.html" target="_blank" style="
+          display:flex; align-items:center; gap:8px;
+          background:#eaf4fb; border:1px solid #aed6f1; border-radius:7px;
+          padding:9px 14px; text-decoration:none; color:#2980b9;
+          font-size:13px; font-weight:bold;">
+        🔢 Triadic Pairs
+      </a>
+    </div>
+
+    <h3>📄 PDF Documents</h3>
+    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;">
+
+      <!-- PDF entry: Complete Ternary Interval Matrix -->
+      <div style="background:#f7fbff; border:1px solid #aed6f1; border-radius:8px; overflow:hidden;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 14px; gap:8px;">
+          <span style="font-size:13px; font-weight:bold; color:#2c3e50;">
+            📊 Complete Ternary Interval Matrix
+          </span>
+          <div style="display:flex; gap:6px; flex-shrink:0;">
+            <button onclick="togglePdfViewer('pdfViewer_ternary')" style="
+                width:auto; padding:5px 11px; margin:0;
+                background:#3498db; color:white; border:none;
+                border-radius:5px; font-size:12px; cursor:pointer;">
+              👁 View
+            </button>
+            <a href="docs/complete_ternary_interval_matrix.pdf" download style="
+                display:flex; align-items:center; gap:5px;
+                background:#27ae60; color:white; border-radius:5px;
+                padding:5px 11px; text-decoration:none;
+                font-size:12px; font-weight:bold;">
+              ⬇ Download
+            </a>
+          </div>
+        </div>
+        <div id="pdfViewer_ternary" style="display:none; border-top:1px solid #aed6f1;">
+          <iframe
+            src="docs/complete_ternary_interval_matrix.pdf"
+            style="width:100%; height:500px; border:none; display:block;"
+            title="Complete Ternary Interval Matrix">
+            <p style="padding:16px; color:#888; font-size:13px;">
+              Il tuo browser non supporta la visualizzazione inline dei PDF.
+              <a href="docs/complete_ternary_interval_matrix.pdf" target="_blank">Apri il documento</a>.
+            </p>
+          </iframe>
+        </div>
+      </div>
+
+      <!-- Aggiungi altri PDF qui seguendo lo stesso schema -->
+      <!-- PDF entry: NOME DEL TUO DOCUMENTO -->
+<div style="background:#f7fbff; border:1px solid #aed6f1; border-radius:8px; overflow:hidden;">
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 14px; gap:8px;">
+      <span style="font-size:13px; font-weight:bold; color:#2c3e50;">
+        📊 Introduction to the Set Theory
+      </span>
+      <div style="display:flex; gap:6px; flex-shrink:0;">
+        <button onclick="togglePdfViewer('pdfViewer_Forte')" style="
+            width:auto; padding:5px 11px; margin:0;
+            background:#3498db; color:white; border:none;
+            border-radius:5px; font-size:12px; cursor:pointer;">
+          👁 View
+        </button>
+        <a href="docs/Intro_Set_Theory.pdf" download style="
+            display:flex; align-items:center; gap:5px;
+            background:#27ae60; color:white; border-radius:5px;
+            padding:5px 11px; text-decoration:none;
+            font-size:12px; font-weight:bold;">
+          ⬇ Download
+        </a>
+      </div>
+    </div>
+    <div id="pdfViewer_Forte" style="display:none; border-top:1px solid #aed6f1;">
+      <iframe
+        src="docs/Intro_Set_Theory.pdf"
+        style="width:100%; height:500px; border:none; display:block;"
+        title="Titolo del tuo PDF">
+        <p style="padding:16px; color:#888; font-size:13px;">
+          Il tuo browser non supporta la visualizzazione inline dei PDF.
+          <a href="docs/Intro_Set_Theory.pdf" target="_blank">Apri il documento</a>.
+        </p>
+      </iframe>
+    </div>
+  </div>
+
+  <div style="background:#f7fbff; border:1px solid #aed6f1; border-radius:8px; overflow:hidden;">
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 14px; gap:8px;">
+      <span style="font-size:13px; font-weight:bold; color:#2c3e50;">
+        📊 Triadic Harmonization
+      </span>
+      <div style="display:flex; gap:6px; flex-shrink:0;">
+        <button onclick="togglePdfViewer('pdfViewer_Forte')" style="
+            width:auto; padding:5px 11px; margin:0;
+            background:#3498db; color:white; border:none;
+            border-radius:5px; font-size:12px; cursor:pointer;">
+          👁 View
+        </button>
+        <a href="docs/triads.pdf" download style="
+            display:flex; align-items:center; gap:5px;
+            background:#27ae60; color:white; border-radius:5px;
+            padding:5px 11px; text-decoration:none;
+            font-size:12px; font-weight:bold;">
+          ⬇ Download
+        </a>
+      </div>
+    </div>
+    <div id="pdfViewer_Forte" style="display:none; border-top:1px solid #aed6f1;">
+      <iframe
+        src="docs/Intro_Set_Theory.pdf"
+        style="width:100%; height:500px; border:none; display:block;"
+        title="Titolo del tuo PDF">
+        <p style="padding:16px; color:#888; font-size:13px;">
+          Il tuo browser non supporta la visualizzazione inline dei PDF.
+          <a href="docs/Intro_Set_Theory.pdf" target="_blank">Apri il documento</a>.
+        </p>
+      </iframe>
+    </div>
+  </div>
+
+    </div>
+
+    <h3>📄 Download</h3>
+    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;">
+
+    <!-- ZIP file: Scales -->
+    <div style="background:#f7fbff; border:1px solid #aed6f1; border-radius:8px; overflow:hidden;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 14px; gap:8px;">
+          <span style="font-size:13px; font-weight:bold; color:#2c3e50;">
+            🎹 Scales
+          </span>
+            <a href="files/geco_scale_presets.zip" download style="
+                display:flex; align-items:center; gap:5px;
+                background:#27ae60; color:white; border-radius:5px;
+                padding:5px 11px; text-decoration:none;
+                font-size:12px; font-weight:bold;">
+              ⬇ Download
+            </a>
+          </div>
+    </div>
+
+    <!-- ZIP file: Triad pairs -->
+    <div style="background:#f7fbff; border:1px solid #aed6f1; border-radius:8px; overflow:hidden;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 14px; gap:8px;">
+          <span style="font-size:13px; font-weight:bold; color:#2c3e50;">
+            🎹 Triad Pairs
+          </span>
+            <a href="files/geco_triad_presets.zip" download style="
+                display:flex; align-items:center; gap:5px;
+                background:#27ae60; color:white; border-radius:5px;
+                padding:5px 11px; text-decoration:none;
+                font-size:12px; font-weight:bold;">
+              ⬇ Download
+            </a>
+          </div>
+    </div>
+
+    <!-- ZIP file: Triad couples -->
+    <div style="background:#f7fbff; border:1px solid #aed6f1; border-radius:8px; overflow:hidden;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 14px; gap:8px;">
+          <span style="font-size:13px; font-weight:bold; color:#2c3e50;">
+            🎹 Triadic Couples
+          </span>
+            <a href="files/geco_triadic_couples_presets.zip" download style="
+                display:flex; align-items:center; gap:5px;
+                background:#27ae60; color:white; border-radius:5px;
+                padding:5px 11px; text-decoration:none;
+                font-size:12px; font-weight:bold;">
+              ⬇ Download
+            </a>
+          </div>
+    </div>
+
+    </div>
+
+    <h3>📄 YouTube</h3>
+    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;">
+
+      <!-- YouTube video 1 -->
+      <div style="background:#f7fbff; border:1px solid #aed6f1; border-radius:8px; overflow:hidden;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 14px; gap:8px;">
+          <span style="font-size:13px; font-weight:bold; color:#2c3e50;">
+            🎬 Main features of GeCo-Tool
+          </span>
+          <a href="https://youtu.be/sJ0nzU4a-Do?si=ztGa3uH4HrAFKG65" target="_blank">
+            Watch on YouTube
+          </a>
+          </div>
+        </div>
+
+        <!-- YouTube video 2 -->
+      <div style="background:#f7fbff; border:1px solid #aed6f1; border-radius:8px; overflow:hidden;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 14px; gap:8px;">
+          <span style="font-size:13px; font-weight:bold; color:#2c3e50;">
+            🎬 Scales with GeCo-Tool
+          </span>
+          <a href="https://youtu.be/KEHosYN2aYY?si=2rUQvr9ZN3FZUswH" target="_blank">
+            Watch on YouTube
+          </a>
+          </div>
+        </div>
+
+    </div>
+
+    <div style="border-top:1px solid #d5f5e3; padding-top:14px; text-align:right;">
+      <button onclick="document.getElementById('docsModal').classList.remove('open')" style="
+          display:inline-flex; align-items:center; gap:6px;
+          background:#f0f0f0; border:1px solid #ccc; border-radius:7px;
+          padding:8px 14px; color:#555; cursor:pointer;
+          font-size:13px; font-weight:bold; width:auto; margin-top:0;">
+        ✕ Close
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<div id="loadingOverlay" style="
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.5);
+    color:white;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    font-size:22px;
+    z-index:20000;
+">
+    ⏳ Generating... please wait
+</div>
+
+<!-- 🎚 BPM CONTROL -->
+<div id="bpmControl" style="
+    position:fixed;
+    top:20px;
+    right:60px;
+    background:white;
+    padding:10px 15px;
+    border-radius:10px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.2);
+    z-index:10000;
+">
+    <label><b>BPM:</b> <span id="bpmValue">100</span></label><br>
+    <input type="range" id="bpmSlider" min="60" max="240" value="100" data-help="Playback tempo in beats per minute (60–240). Does not affect the generated MIDI file, only the in-browser playback speed.">
+</div>
+
+
+
+<div class="container" style="position:relative;">
+
+    <!-- Pitch-Class Circle -->
+    <div id="pcCircleWrap">
+        <svg id="pcCircle" width="260" height="260" viewBox="-110 -110 220 220"></svg>
+    </div>
+
+    <div class="testo_interval">Interval Strategy</div>
+
+    <img id="sequenceImage" src="Binary.png" alt="Sequence diagram"
+        style="height:30px; position:absolute; top:230px; right:50px;">
+
+    
+
+<!-- <h2>Generative Composition</h2> -->
+<h1 class="titolo">
+    <span>GeCo-Tool</span>
+    <img src="penta.png" width="140" align="center" alt="Logo">
+  </h1>
+
+<label>Start Note</label>
+<select id="startNote" data-help="The pitch-class on which the sequence begins. The actual octave is assigned automatically (C–F# start in octave 4, G–B in octave 3).">
+<option value="0">C</option>
+<option value="1">C#</option>
+<option value="2">D</option>
+<option value="3">Eb</option>
+<option value="4">E</option>
+<option value="5">F</option>
+<option value="6">F#</option>
+<option value="7">G</option>
+<option value="8">Ab</option>
+<option value="9">A</option>
+<option value="10">Bb</option>
+<option value="11">B</option>
+</select>
+
+<br><br>
+
+<div style="display:flex; align-items:center; justify-content:center; gap:30px; flex-wrap:wrap;">
+
+  <!-- Sequence selector (centrato come prima) -->
+  <div style="position:relative; display:flex; align-items:center; gap:8px;">
+    <label>Sequence</label>
+    <select id="sequenceType" data-help="The structural type of the sequence. Binary: 1 interval + 1 leap per cycle. Quaternary: 2 pairs. Senary: 3 pairs. Ternary: 3 consecutive intervals per cycle (no explicit leaps).">
+    <option value="Binary" selected>Binary</option>
+    <option value="Quaternary">Quaternary</option>
+    <option value="Senary">Senary</option>
+    <option value="Ternary">Ternary</option>
+    <option value="Multidimensional">Multidimensional</option>
+    </select>
+
+    <!-- K input: appare solo con Multidimensional -->
+    <span id="multiKWrap" style="display:none; margin-left:12px;">
+        K &nbsp;<span class="np-anchor" id="np-anchor-multiK"><span class="np-fake-input" id="np-display-multiK" style="width:52px;">8</span><input type="hidden" id="multiK" value="8" data-help="Multidimensional — K: number of intervals in the sequence (1–12). After setting K, a list of K integer interval fields will appear below."><div class="np-popup" id="np-popup-multiK"></div></span>
+    </span>
+  </div>
+
+  <!-- Jump + Length (a destra, readonly) -->
+  <div style="display:flex; align-items:center; gap:14px;">
+    <label style="display:flex; align-items:center; gap:5px; font-size:12px; white-space:nowrap;">
+      Jump
+      <input id="jumpVal" type="text" value="0" readonly style="
+        width:30px; background:#f0f6ff; color:#2471a3;
+        border:1px solid #aed6f1; border-radius:5px;
+        text-align:center; font-weight:bold; cursor:default; pointer-events:none;">
+    </label>
+    <label style="display:flex; align-items:center; gap:5px; font-size:12px; white-space:nowrap;">
+      Length
+      <input id="lengthVal" type="text" value="0" readonly style="
+        width:30px; background:#f0f6ff; color:#2471a3;
+        border:1px solid #aed6f1; border-radius:5px;
+        text-align:center; font-weight:bold; cursor:default; pointer-events:none;">
+    </label>
+  </div>
+
+</div>
+
+<!-- Pannello Multidimensional: K campi interi su max 2 righe da 6 -->
+<div id="multidimensionalParams" style="display:none; margin-top:6px; margin-left:400px;">
+    <div id="multiRow1" style="display:flex; gap:8px; align-items:center; flex-wrap:nowrap; margin-bottom:6px;"></div>
+    <div id="multiRow2" style="display:flex; gap:8px; align-items:center; flex-wrap:nowrap;"></div>
+</div>
+
+<!-- Link a K-random: visibile con qualsiasi Multidimensional -->
+<div id="kRandomLink" style="display:none; margin-top:8px; margin-left:400px; align-items:center; gap:10px;">
+    <span style="font-size:13px; color:#555;">Experiment random sequences</span>
+    <a href="K-random.html" target="_blank"
+       style="display:inline-flex; align-items:center; gap:7px;
+              background:#eaf4fb; border:1px solid #aed6f1; border-radius:7px;
+              padding:7px 14px; text-decoration:none; color:#2980b9;
+              font-size:13px; font-weight:bold;">
+        🎲 Random sequences
+    </a>
+</div>
+
+<!-- Link al Twelve-Tone Calculator: visibile solo con Multidimensional + K=11 -->
+<div id="twelveToneLink" style="display:none; margin-top:8px; margin-left:400px; align-items:center; gap:10px;">
+    <span style="font-size:13px; color:#555;">Run this for twelve-tone study</span>
+    <a id="twelveToneAnchor" href="twelve-tone-calculator.html" target="_blank"
+       style="display:inline-flex; align-items:center; gap:7px;
+              background:#eaf4fb; border:1px solid #aed6f1; border-radius:7px;
+              padding:7px 14px; text-decoration:none; color:#2980b9;
+              font-size:13px; font-weight:bold;">
+        🎹 Open Twelve-Tone Calculator
+    </a>
+</div>
+
+<!-- <style>
+    input[type="number"] {
+      width: 72px;
+      /* Forza la visualizzazione degli spinner su WebKit/Blink (Chrome, Safari, Edge) */
+      -webkit-appearance: auto;
+      appearance: auto;
+    }
+  
+    /* Evita che Firefox li nasconda */
+    input[type="number"] {
+      -moz-appearance: number-input;
+    }
+</style> -->
+
+<div id="binaryParams">
+Interval <span class="np-anchor" id="np-anchor-interval"><span class="np-fake-input" id="np-display-interval">3</span><input type="hidden" id="interval" value="3" data-help="Binary — Interval: the melodic step applied within each cycle (in semitones; positive = up, negative = down)."><div class="np-popup" id="np-popup-interval"></div></span>
+&nbsp;&nbsp;
+Leap <span class="np-anchor" id="np-anchor-leap"><span class="np-fake-input" id="np-display-leap">-1</span><input type="hidden" id="leap" value="-1" data-help="Binary — Leap: the connecting jump between one cycle and the next (in semitones)."><div class="np-popup" id="np-popup-leap"></div></span>
+</div>
+
+<!-- ── View Table checkbox ── -->
+<div style="text-align:center; margin-top:10px;">
+  <label id="viewTableLabel" style="display:inline-flex; align-items:center; gap:7px; font-size:13px; color:#555; cursor:pointer; user-select:none;">
+    <input type="checkbox" id="viewTableChk" onchange="document.getElementById('intTablePanel').style.display=this.checked?'block':'none'" style="width:15px;height:15px;cursor:pointer;">
+    View Interval Table
+  </label>
+</div>
+
+<!-- ── Interval Table Panel ── -->
+<div id="intTablePanel" style="display:none; margin-top:18px;">
+  <div class="int-table-wrapper">
+    <table class="int-table">
+      <thead>
+        <tr>
+          <th>Ascending ↑</th>
+          <th>Interval</th>
+          <th>Descending ↓</th>
+          <th>Interval</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="int-semi">0</td><td class="int-interval">P1 / 8</td><td class="int-semi int-neg">0</td><td class="int-interval">P1 / 8</td></tr>
+        <tr><td class="int-semi">1</td><td class="int-interval">2m</td><td class="int-semi int-neg">−11</td><td class="int-interval">7M</td></tr>
+        <tr><td class="int-semi">2</td><td class="int-interval">2M</td><td class="int-semi int-neg">−10</td><td class="int-interval">7m</td></tr>
+        <tr><td class="int-semi">3</td><td class="int-interval">3m</td><td class="int-semi int-neg">−9</td><td class="int-interval">6M</td></tr>
+        <tr><td class="int-semi">4</td><td class="int-interval">3M</td><td class="int-semi int-neg">−8</td><td class="int-interval">6m</td></tr>
+        <tr><td class="int-semi">5</td><td class="int-interval">4</td><td class="int-semi int-neg">−7</td><td class="int-interval">5</td></tr>
+        <tr><td class="int-semi">6</td><td class="int-interval">5♭ / 4♯</td><td class="int-semi int-neg">−6</td><td class="int-interval">4♯ / 5♭</td></tr>
+        <tr><td class="int-semi">7</td><td class="int-interval">5</td><td class="int-semi int-neg">−5</td><td class="int-interval">4</td></tr>
+        <tr><td class="int-semi">8</td><td class="int-interval">6m</td><td class="int-semi int-neg">−4</td><td class="int-interval">3M</td></tr>
+        <tr><td class="int-semi">9</td><td class="int-interval">6M</td><td class="int-semi int-neg">−3</td><td class="int-interval">3m</td></tr>
+        <tr><td class="int-semi">10</td><td class="int-interval">7m</td><td class="int-semi int-neg">−2</td><td class="int-interval">2M</td></tr>
+        <tr><td class="int-semi">11</td><td class="int-interval">7M</td><td class="int-semi int-neg">−1</td><td class="int-interval">2m</td></tr>
+        <tr><td class="int-semi">12</td><td class="int-interval">8 / P1</td><td class="int-semi int-neg">−12</td><td class="int-interval">8 / P1</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div id="quaternaryParams" style="display:none;" >
+Interval1 <span class="np-anchor" id="np-anchor-interval1"><span class="np-fake-input" id="np-display-interval1">3</span><input type="hidden" id="interval1" value="3" data-help="Quaternary — Interval 1: first melodic step in the cycle (semitones)."><div class="np-popup" id="np-popup-interval1"></div></span>
+&nbsp;&nbsp;
+Leap1 <span class="np-anchor" id="np-anchor-leap1"><span class="np-fake-input" id="np-display-leap1">3</span><input type="hidden" id="leap1" value="3" data-help="Quaternary — Leap 1: jump connecting the first and second interval (semitones)."><div class="np-popup" id="np-popup-leap1"></div></span>
+&nbsp;&nbsp;
+Interval2 <span class="np-anchor" id="np-anchor-interval2"><span class="np-fake-input" id="np-display-interval2">6</span><input type="hidden" id="interval2" value="6" data-help="Quaternary — Interval 2: second melodic step in the cycle (semitones)."><div class="np-popup" id="np-popup-interval2"></div></span>
+&nbsp;&nbsp;
+Leap2 <span class="np-anchor" id="np-anchor-leap2"><span class="np-fake-input" id="np-display-leap2">-2</span><input type="hidden" id="leap2" value="-2" data-help="Quaternary — Leap 2: jump connecting the cycle back to its start (semitones)."><div class="np-popup" id="np-popup-leap2"></div></span>
+</div>
+
+<div id="senaryParams" style="display:none;" >
+In1 <span class="np-anchor" id="np-anchor-int1"><span class="np-fake-input" id="np-display-int1">3</span><input type="hidden" id="int1" value="3" data-help="Senary — Interval 1: first melodic step (semitones)."><div class="np-popup" id="np-popup-int1"></div></span>
+&nbsp;
+Le1 <span class="np-anchor" id="np-anchor-lea1"><span class="np-fake-input" id="np-display-lea1">3</span><input type="hidden" id="lea1" value="3" data-help="Senary — Leap 1: jump after the first interval (semitones)."><div class="np-popup" id="np-popup-lea1"></div></span>
+&nbsp;
+In2 <span class="np-anchor" id="np-anchor-int2"><span class="np-fake-input" id="np-display-int2">6</span><input type="hidden" id="int2" value="6" data-help="Senary — Interval 2: second melodic step (semitones)."><div class="np-popup" id="np-popup-int2"></div></span>
+&nbsp;
+Le2 <span class="np-anchor" id="np-anchor-lea2"><span class="np-fake-input" id="np-display-lea2">-2</span><input type="hidden" id="lea2" value="-2" data-help="Senary — Leap 2: jump after the second interval (semitones)."><div class="np-popup" id="np-popup-lea2"></div></span>
+&nbsp;
+In3 <span class="np-anchor" id="np-anchor-int3"><span class="np-fake-input" id="np-display-int3">-2</span><input type="hidden" id="int3" value="-2" data-help="Senary — Interval 3: third melodic step (semitones)."><div class="np-popup" id="np-popup-int3"></div></span>
+&nbsp;
+Le3 <span class="np-anchor" id="np-anchor-lea3"><span class="np-fake-input" id="np-display-lea3">1</span><input type="hidden" id="lea3" value="1" data-help="Senary — Leap 3: jump closing the cycle (semitones)."><div class="np-popup" id="np-popup-lea3"></div></span>
+</div>
+<br>
+
+<div id="ternaryParams" style="display:none;" >
+Inter1 <span class="np-anchor" id="np-anchor-inter1"><span class="np-fake-input" id="np-display-inter1">5</span><input type="hidden" id="inter1" value="5" data-help="Ternary — Interval 1: first of three consecutive steps applied each cycle (semitones)."><div class="np-popup" id="np-popup-inter1"></div></span>
+&nbsp;&nbsp;
+Inter2 <span class="np-anchor" id="np-anchor-inter2"><span class="np-fake-input" id="np-display-inter2">-3</span><input type="hidden" id="inter2" value="-3" data-help="Ternary — Interval 2: second step per cycle (semitones)."><div class="np-popup" id="np-popup-inter2"></div></span>
+&nbsp;&nbsp;
+Inter3 <span class="np-anchor" id="np-anchor-inter3"><span class="np-fake-input" id="np-display-inter3">2</span><input type="hidden" id="inter3" value="2" data-help="Ternary — Interval 3: third step per cycle. The sum of the three intervals determines the period length (semitones)."><div class="np-popup" id="np-popup-inter3"></div></span>
+</div>
+<br>
+
+<label>Tempo</label>
+<select id="tempo" data-help="Rhythm mode. sequence-constrained: durations change at cycle boundaries. length-constrained: change every N notes (N random from {2,3,5,6}). constant: all notes equal (choose below). free: each note gets an independent random duration.">
+<option value="sequence-constrained" selected>sequence-constrained</option>
+<option value="length-constrained">length-constrained</option>
+<option value="constant">constant</option>
+<option value="free">free</option>
+</select>
+
+<div id="constantOptions" style="display:none;">
+<label>Note Length</label>
+<select id="noteLength" data-help="Duration assigned to every note when Tempo = constant. From whole note (4 beats) down to sixteenth (¼ beat).">
+<option value="4">Whole (4 beats)</option>
+<option value="2">Half (2 beats)</option>
+<option value="1">Quarter (1 beat)</option>
+<option value="0.5">Eighth (1/2 beat)</option>
+<option value="0.25">Sixteenth (1/4 beat)</option>
+</select>
+</div>
+
+<br><br>
+
+<!-- Riga 1: Octaves limitation · Harmony · Bass clef -->
+<label>
+    <input type="checkbox" id="octave" data-help="Octave constraint. Unchecked: melody spans up to 2 octaves. Checked: melody is confined to 1 octave, producing a denser, more compact line.">
+    Octaves limitation
+</label>
+
+<label style="margin-left:20px;">
+    <input type="checkbox" id="harmony" data-help="Adds a bass-clef accompaniment (left hand). Three harmonisation styles are available: Classic, On the beat, Off the beat.">
+    Harmony
+</label>
+
+<label style="margin-left:20px;">
+    <input type="checkbox" id="bassClef" data-help="Transposes the entire output down two octaves and notates it in bass clef. Useful for cello, bassoon, left-hand piano studies, etc.">
+    Bass clef
+</label>
+
+<br style="margin-bottom:6px;">
+
+<!-- Riga 2: Metronome · Swing -->
+<label style="margin-top:8px; display:inline-block;">
+    <input type="checkbox" id="metronome" data-help="When enabled, a metronome click will sound during playback at the current BPM.">
+    Metronome
+</label>
+<span style="margin-left:8px; font-size:13px; vertical-align:middle;" title="Metronome volume">🔊</span>
+<input type="range" id="metronomeVolume" min="0" max="100" value="80" step="1"
+    style="margin-left:4px; width:70px; vertical-align:middle;"
+    data-help="Metronome volume (0 = silent, 100 = full volume).">
+<span id="metronomeVolumeLabel" style="margin-left:4px; font-size:12px; color:#555;">80%</span>
+<script>
+    document.getElementById('metronomeVolume').addEventListener('input', function(){
+        document.getElementById('metronomeVolumeLabel').textContent = this.value + '%'
+    })
+</script>
+<select id="metronomeSound" style="margin-left:12px; font-size:13px; padding:2px 6px; border-radius:5px; border:1px solid #aaa;"
+    data-help="Metronome click sound. DAW: short white noise burst. Beep: sine tone. Wood: wooden stick click.">
+    <option value="noise">DAW (noise)</option>
+    <option value="beep">Beep (sine)</option>
+    <option value="wood">Wood block</option>
+</select>
+
+<label style="margin-left:20px;">
+    <input type="checkbox" id="swing" data-help="When enabled, eighth notes are played with a swing feel: the off-beat eighth is delayed, creating a long-short pattern. Use the slider to set the intensity (50% = straight, 67% = full swing 2:1).">
+    Swing
+</label>
+<input type="range" id="swingAmount" min="50" max="75" value="62" step="1"
+    style="margin-left:8px; width:80px; vertical-align:middle;"
+    data-help="Swing intensity. 50% = straight (no swing). 67% = full jazz swing (2:1 triplet feel). Values between give a lighter shuffle.">
+<span id="swingLabel" style="margin-left:4px; font-size:12px; color:#555;">62%</span>
+<script>
+    document.getElementById('swingAmount').addEventListener('input', function(){
+        document.getElementById('swingLabel').textContent = this.value + '%'
+    })
+</script>
+
+
+
+<!-- ── Pitch Range + Instrument (stessa riga) ── -->
+<div style="display:flex; align-items:center; justify-content:center; gap:10px; margin-top:10px; flex-wrap:wrap;">
+
+    <div id="pitchRangeBox" style="border:2px solid #b0c4de; background:#eaf2ff; border-radius:8px; padding:10px 18px;"
+         data-help="Sets the MIDI pitch range used by centra_stream to keep the melody in register. Min and Max are expressed as MIDI note numbers (C3=48, C4=60, C5=72, C6=84). The melody is transposed by octaves to fit inside this window.">
+        <span style="font-weight:bold; font-size:13px; display:block; margin-bottom:6px;">Pitch Range</span>
+        <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            <span style="font-size:12px; color:#555; width:26px;">Min</span>
+            <input type="range" id="pitchRangeMin" min="36" max="84" value="52" step="1"
+                   style="width:160px; vertical-align:middle; cursor:pointer;">
+            <input type="number" id="pitchRangeMinNum" min="36" max="84" value="52" step="1"
+                   style="width:46px; font-size:12px; padding:1px 3px; border:1px solid #aac; border-radius:3px;">
+            <span id="pitchRangeMinLabel" style="font-size:12px; color:#555; min-width:38px;">E3</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:12px; color:#555; width:26px;">Max</span>
+            <input type="range" id="pitchRangeMax" min="48" max="108" value="88" step="1"
+                   style="width:160px; vertical-align:middle; cursor:pointer;">
+            <input type="number" id="pitchRangeMaxNum" min="48" max="108" value="88" step="1"
+                   style="width:46px; font-size:12px; padding:1px 3px; border:1px solid #aac; border-radius:3px;">
+            <span id="pitchRangeMaxLabel" style="font-size:12px; color:#555; min-width:38px;">E6</span>
+        </div>
+    </div>
+
+    <!-- ── Instrument box ── -->
+    <div style="border:2px solid #b0c4de; background:#eaf2ff; border-radius:8px; padding:7px 16px;">
+        <span style="font-weight:bold; font-size:13px; margin-right:12px;">Instrument</span>
+        <label style="margin-right:12px; font-size:13px; cursor:pointer;">
+            <input type="radio" name="instrumentMode" id="instrPiano" value="piano" checked style="width:auto; margin-right:4px;">
+            Piano
+        </label>
+        <label style="font-size:13px; cursor:pointer;">
+            <input type="radio" name="instrumentMode" id="instrSaxBb" value="saxBb" style="width:auto; margin-right:4px;">
+            Sax Bb
+        </label>
+    </div>
+
+</div>
+<script>
+(function(){
+    const slMin  = document.getElementById("pitchRangeMin");
+    const slMax  = document.getElementById("pitchRangeMax");
+    const numMin = document.getElementById("pitchRangeMinNum");
+    const numMax = document.getElementById("pitchRangeMaxNum");
+    const lbMin  = document.getElementById("pitchRangeMinLabel");
+    const lbMax  = document.getElementById("pitchRangeMaxLabel");
+    const GAP = 12;
+    const NOTE_NAMES_ONLY = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+    function noteName(m){ return NOTE_NAMES_ONLY[m%12] + Math.floor(m/12-1); }
+
+    function applyMin(v){
+        v = Math.max(parseInt(slMin.min), Math.min(parseInt(slMax.value) - GAP, v));
+        slMin.value  = v;
+        numMin.value = v;
+        lbMin.textContent = noteName(v);
+    }
+    function applyMax(v){
+        v = Math.min(parseInt(slMax.max), Math.max(parseInt(slMin.value) + GAP, v));
+        slMax.value  = v;
+        numMax.value = v;
+        lbMax.textContent = noteName(v);
+    }
+
+    slMin.addEventListener("input",  () => applyMin(parseInt(slMin.value)));
+    numMin.addEventListener("change", () => applyMin(parseInt(numMin.value)));
+    numMin.addEventListener("input",  () => applyMin(parseInt(numMin.value)));
+
+    slMax.addEventListener("input",  () => applyMax(parseInt(slMax.value)));
+    numMax.addEventListener("change", () => applyMax(parseInt(numMax.value)));
+    numMax.addEventListener("input",  () => applyMax(parseInt(numMax.value)));
+
+    applyMin(parseInt(slMin.value));
+    applyMax(parseInt(slMax.value));
+})();
+</script>
+
+<div id="harmonyOptions" style="display:none; margin-top:10px;">
+    <div id="harmonyTypeRow">
+        <label>Harmony Type</label>
+        <select id="harmonyType" data-help="Style of the bass-clef accompaniment. Classic: each melody note paired with its lower octave. On the beat: chords on strong beats. Off the beat: chords on weak beats.">
+            <option value="classic">Classic</option>
+            <option value="onbeat">On the beat</option>
+            <option value="offbeat">Off the beat</option>
+        </select>
+    </div>
+</div>
+
+
+
+<div style="display:flex; align-items:center; gap:12px; margin-top:10px;">
+  <button onclick="generateMusic()" style="margin-top:0;" data-help="Sends the current parameters to the server and generates a new sequence. The result is displayed as notation and loaded for playback and download.">Generate</button>
+  <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#333; cursor:pointer; user-select:none; white-space:nowrap;">
+    <input type="checkbox" id="discardClosure" style="width:15px; height:15px; cursor:pointer;"
+      data-help="Discard closure: when checked, the last note of the generated sequence (which equals the first) is removed.">
+    Discard closure
+  </label>
+</div>
+
+<!-- pitch transformation  -->
+<div class="transformation-box">
+    <div class="label">Pitch-Class Transformations</div>
+    
+    <div class="operator-row">
+        <button onclick="transform('T')" title="Transpose" data-help="T — Transpose: shifts all pitches by the number of semitones you select in the dropdown (−12 to +12).">T</button>
+        <button onclick="transform('I')" title="Invert" data-help="I — Inversion: reflects each melodic interval around the first pitch. Rising intervals become falling, and vice versa.">I</button>
+        <button onclick="transform('R')" title="Retrograde" data-help="R — Retrograde: reverses the order of all pitches, so the sequence is played backwards.">R</button>
+        <button onclick="transform('RI')" title="Retrograde-Invert" data-help="RI — Retrograde-Inversion: applies inversion first, then retrograde. One of the four classical serial transformations.">RI</button>
+    </div>
+    <div id="transposeControl" style="margin-top:10px; display:none;">
+        <label>Semitones:</label>
+        <select id="transposeValue" data-help="Number of semitones for transposition. Positive values transpose up, negative values down.">
+            <!-- generato via JS -->
+        </select>
+    </div>
+</div>
+
+<!-- rythm transformation  -->
+<div class="rythm_transformation-box">
+    <div class="label">Rythmic Transformations</div>
+    
+    <div class="operator2-row">
+        <button onclick="rythm_transform('r_Sp')" title="Shift +" data-help="S+ — Rhythmic shift forward: the duration pattern is cyclically advanced by two positions (the last two durations move to the front).">S+</button>
+        <button onclick="rythm_transform('r_Sm')" title="Shift -" data-help="S− — Rhythmic shift backward: the duration pattern is cyclically retarded by two positions (the first two durations move to the end).">S-</button>
+        <button onclick="rythm_transform('r_I')" title="Invert" data-help="I — Rhythmic inversion: durations are rank-ordered and each is replaced by its complementary rank, exchanging long and short values.">I</button>
+        <button onclick="rythm_transform('r_R')" title="Retrograde" data-help="R — Rhythmic retrograde: reverses the sequence of note durations, while keeping the pitches in their original order.">R</button>
+    </div>
+</div>
+
+<div style="display:flex; gap:16px; align-items:stretch; flex-wrap:wrap; margin-top:10px;">
+
+  <!-- Box Playback -->
+  <div style="flex:3; border:2px solid #3498db; border-radius:10px; padding:8px 12px; background:#eaf4fb;">
+    <div style="font-size:11px; font-weight:bold; color:#2980b9; text-align:center; margin-bottom:6px; letter-spacing:0.05em;">PLAYBACK</div>
+    <div class="button-row" style="margin-top:0;">
+      <button onclick="playMusic()" data-help="Plays back the generated sequence using a piano soundfont at the BPM set by the slider (top right).">Play</button>
+      <button id="pauseBtn" onclick="pauseResumeMusic()" data-help="Pauses playback. Press again (Continue) to resume from the same position." style="background:#e67e22;">Pause</button>
+      <button onclick="stopMusic()" data-help="Stops playback immediately.">Stop</button>
+    </div>
+  </div>
+
+  <!-- Box MIDI -->
+  <div style="flex:2; border:2px solid #27ae60; border-radius:10px; padding:8px 12px; background:#eafaf1;">
+    <div style="font-size:11px; font-weight:bold; color:#1e8449; text-align:center; margin-bottom:6px; letter-spacing:0.05em;">MIDI</div>
+    <div class="button-row" style="margin-top:0;">
+      <button onclick="downloadMidi()" data-help="Downloads the current sequence as a MIDI file and a text file with all generation parameters." style="background:#27ae60;">Download MIDI</button>
+      <button onclick="document.getElementById('midiFileInput').click()"
+          data-help="Import a MIDI file generated by GeCo-Tool. The sequence will be loaded and all transformations will be available. Sequence type, tempo, and harmony must match the imported file (e.g. I(I(X)) = X only if parameters are consistent)."
+          title="!Sequence type, tempo, and harmony MUST match the imported file!"
+          style="background:#27ae60;">Import MIDI</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Input nascosto per il file -->
+<input type="file" id="midiFileInput" accept=".mid,.midi,.txt" multiple style="display:none"
+       onchange="importMidi(this)">
+
+<button class="reset-btn" onclick="resetApp()" data-help="Resets all parameters to their default values and clears the score. The page will reload.">Reset</button>
+
+<br>
+<label style="font-style: italic; display: block; text-align: right;">
+    R. Olmi & M. Bittelli
+    
+  </label>
+  <label style="font-style: italic; display: block; text-align: right; font-size:10px; color:#3498db">
+    Generative Compositional Tool
+  </label>
+
+  
+<!-- ── Contextual help panel ── -->
+<div id="helpPanel"><em>Hover over or focus any control to see its description.</em></div>
+
+<div id="score"></div>
+
+</div>
+
+
+<!-- <div id="serverStatus" 
+    style="
+        position:fixed;
+        top:0;
+        left:0;
+        width:100%;
+        background:#3498db;
+        text-align:center;
+        padding:10px;
+        z-index:9999;
+        font-weight:bold;
+        ">
+        🚀 The server is starting... please wait a few seconds
+</div> -->
+
+
+<script>
+
+// Cambia solo questa riga per passare da locale a produzione
+// const ENV = "local"   // cambia in "remote" per produzione
+const ENV = "remote"
+const BASE_URL = ENV === "local" ? "http://localhost:5000" : "https://serie2.onrender.com"
+let serverAwake = ENV === "local"  // true in locale, false in remoto
+
+let midiData
+let part
+let synth
+let osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(document.getElementById("score"))
+let midiBlobGlobal
+let inversionActive = false
+
+const loadingOverlay = document.getElementById("loadingOverlay");
+
+osmd.setOptions({
+    drawPartNames: false,
+    drawPartAbbreviations: false
+})
+
+// popolamento select trasposizione
+const transposeSelect = document.getElementById("transposeValue")
+
+for(let i = -12; i <= 12; i++){
+    const opt = document.createElement("option")
+    opt.value = i
+    opt.textContent = i
+    transposeSelect.appendChild(opt)
+    transposeSelect.value = "0"
+}
+
+transposeSelect.addEventListener("change", () => {
+    const value = parseInt(transposeSelect.value)
+
+    sendTransform({
+        operation: "T",
+        value: value
+    })
+    document.getElementById("transposeControl").style.display = "none"
+})
+
+// Chiude il pannello semitoni cliccando fuori
+document.addEventListener("click", (e) => {
+    const transposeControl = document.getElementById("transposeControl")
+    const transformBox = transposeControl.closest(".transformation-box")
+    if (transposeControl.style.display !== "none" && !transformBox.contains(e.target)) {
+        transposeControl.style.display = "none"
+    }
+})
+
+
+
+/* 🎚 BPM CONTROL */
+const bpmSlider = document.getElementById("bpmSlider")
+const bpmValue = document.getElementById("bpmValue")
+
+bpmSlider.addEventListener("input", function(){
+    bpmValue.textContent = this.value
+})
+
+
+
+document.getElementById("sequenceType").addEventListener("change", function(){
+    const type = this.value
+    document.getElementById("binaryParams").style.display = type === "Binary" ? "block" : "none"
+    document.getElementById("quaternaryParams").style.display = type === "Quaternary" ? "block" : "none"
+    document.getElementById("senaryParams").style.display = type === "Senary" ? "block" : "none"
+    document.getElementById("ternaryParams").style.display = type === "Ternary" ? "block" : "none"
+    document.getElementById("multidimensionalParams").style.display = type === "Multidimensional" ? "block" : "none"
+    document.getElementById("multiKWrap").style.display = type === "Multidimensional" ? "inline-flex" : "none"
+    const krLink = document.getElementById("kRandomLink")
+    if(krLink) krLink.style.display = type === "Multidimensional" ? "flex" : "none"
+    // Nascondi sempre il link; buildMultiInputs lo riattiva se K=11
+    const ttLink = document.getElementById("twelveToneLink")
+    if(ttLink) ttLink.style.display = "none"
+    const imgEl = document.getElementById("sequenceImage")
+
+    imgEl.src =
+    type === "Binary"            ? "Binary.png" :
+    type === "Quaternary"        ? "Quaternary.png" :
+    type === "Senary"            ? "Senary.png" :
+    type === "Ternary"           ? "3D.png" :
+    "Multidimensional.png"
+
+    // Layout standard
+    imgEl.style.right = "50px"
+
+    if(type === "Multidimensional"){
+        // più in basso
+        imgEl.style.top = "240px"
+
+        // più larga
+        imgEl.style.width = "180px"
+        imgEl.style.height = "auto"
+    }
+    else{
+        // layout originale
+        imgEl.style.top = "230px"
+        imgEl.style.height = "30px"
+        imgEl.style.width = "auto"
+    }
+    if(type === "Multidimensional") buildMultiInputs()
+})
+
+/* ── Multidimensional: costruisce i K campi input ── */
+function buildMultiInputs(){
+    const k = Math.min(12, Math.max(1, parseInt(document.getElementById("multiK").value) || 1))
+    const row1 = document.getElementById("multiRow1")
+    const row2 = document.getElementById("multiRow2")
+    row1.innerHTML = ""
+    row2.innerHTML = ""
+    const defaults = {
+        1:  [1],
+        2:  [3,-1],
+        3:  [5,-3,2],
+        4:  [3,3,6,-2],
+        5:  [3,-1,5,-3,2],
+        6:  [3,3,6,-2,-2,1],
+        7:  [2,2,1,2,2,2,1],
+        8:  [2,2,1,2,2,1,1,1],
+        9:  [3,3,6,-2,3,-1,5,-3,2],
+        10: [3,-1,5,-3,2,3,-1,5,-3,2],
+        11: [3,3,6,-2,-2,1,3,-1,5,-3,2],
+        12: [1,1,1,1,1,1,1,1,1,1,1,1]
+    }
+    for(let i = 1; i <= k; i++){
+        const defVal = (defaults[k] && defaults[k][i-1] !== undefined) ? defaults[k][i-1] : 0
+        const label = document.createElement("label")
+        label.style.cssText = "display:flex; flex-direction:column; align-items:center; font-size:13px; gap:2px;"
+        label.innerHTML = `<span>i${i}</span>`
+        const anchor = document.createElement("span")
+        anchor.className = "np-anchor"
+        anchor.id = `np-anchor-multi_i${i}`
+        const disp = document.createElement("span")
+        disp.className = "np-fake-input"
+        disp.id = `np-display-multi_i${i}`
+        disp.textContent = defVal
+        const inp = document.createElement("input")
+        inp.type = "hidden"
+        inp.id = `multi_i${i}`
+        inp.value = defVal
+        inp.setAttribute("data-help", `Multidimensional — Interval i${i} of ${k} (integer, semitones).`)
+        const popup = document.createElement("div")
+        popup.className = "np-popup"
+        popup.id = `np-popup-multi_i${i}`
+        anchor.appendChild(disp)
+        anchor.appendChild(inp)
+        anchor.appendChild(popup)
+        label.appendChild(anchor)
+        if(i <= 6) row1.appendChild(label)
+        else       row2.appendChild(label)
+        GeCo_NP.init(`multi_i${i}`, defVal)
+    }
+    row2.style.display = k > 6 ? "flex" : "none"
+
+    // Mostra il link al Twelve-Tone Calculator solo se K = 11
+    const ttLink = document.getElementById("twelveToneLink")
+    if(ttLink) ttLink.style.display = k === 11 ? "flex" : "none"
+
+    if(k === 11) updateTwelveToneLink()
+}
+
+function updateTwelveToneLink(){
+    const anchor = document.getElementById("twelveToneAnchor")
+    if(!anchor) return
+    const p = new URLSearchParams()
+    // intervalli
+    for(let i = 1; i <= 11; i++){
+        const el = document.getElementById(`multi_i${i}`)
+        if(el) p.set(`i${i}`, el.value)
+    }
+    // startNote
+    const sn = document.getElementById("startNote")
+    if(sn) p.set("startNote", sn.value)
+    // tempo
+    const tempo = document.getElementById("tempo")
+    if(tempo) p.set("tempo", tempo.value)
+    const nl = document.getElementById("noteLength")
+    if(nl) p.set("noteLength", nl.value)
+    // harmony
+    const harm = document.getElementById("harmony")
+    if(harm) p.set("harmony", harm.checked ? "1" : "0")
+    const ht = document.getElementById("harmonyType")
+    if(ht) p.set("harmonyType", ht.value)
+
+    anchor.href = "twelve-tone-calculator.html?" + p.toString()
+}
+
+document.getElementById("multiK").addEventListener("change", function(){
+    let v = parseInt(this.value)
+    if(isNaN(v) || v < 1) { v = 1; this.value = 1 }
+    if(v > 12)            { v = 12; this.value = 12 }
+    buildMultiInputs()
+})
+document.getElementById("multiK").addEventListener("input", function(){
+    let v = parseInt(this.value)
+    if(!isNaN(v) && v >= 1 && v <= 12) buildMultiInputs()
+})
+
+// Aggiorna il link appena prima di aprirlo (cattura modifiche ai campi)
+document.addEventListener("click", function(e){
+    if(e.target && e.target.id === "twelveToneAnchor") updateTwelveToneLink()
+})
+
+function showLoading(){
+    document.getElementById("loadingOverlay").style.display = "flex";
+}
+
+function hideLoading(){
+    document.getElementById("loadingOverlay").style.display = "none";
+}
+
+function getParams(){
+    const sequenceType = document.getElementById("sequenceType").value
+
+    let params = {}
+
+    if(sequenceType === "Binary"){
+        params.interval = parseInt(document.getElementById("interval").value)
+        params.leap     = parseInt(document.getElementById("leap").value)
+    } else if (sequenceType === "Quaternary") {
+        params.interval1 = parseInt(document.getElementById("interval1").value)
+        params.leap1     = parseInt(document.getElementById("leap1").value)
+        params.interval2 = parseInt(document.getElementById("interval2").value)
+        params.leap2     = parseInt(document.getElementById("leap2").value)
+    } else if (sequenceType === "Senary") {
+        params.int1 = parseInt(document.getElementById("int1").value)
+        params.lea1 = parseInt(document.getElementById("lea1").value)
+        params.int2 = parseInt(document.getElementById("int2").value)
+        params.lea2 = parseInt(document.getElementById("lea2").value)
+        params.int3 = parseInt(document.getElementById("int3").value)
+        params.lea3 = parseInt(document.getElementById("lea3").value)
+    }
+    else if (sequenceType === "Multidimensional") {
+        const k = Math.min(12, Math.max(1, parseInt(document.getElementById("multiK").value) || 1))
+        params.multi_k = k
+        params.multi_values = []
+        for(let i = 1; i <= k; i++){
+            const el = document.getElementById(`multi_i${i}`)
+            params.multi_values.push(el ? parseInt(el.value) || 0 : 0)
+        }
+    }
+    else {
+        params.inter1 = parseInt(document.getElementById("inter1").value)
+        params.inter2 = parseInt(document.getElementById("inter2").value)
+        params.inter3 = parseInt(document.getElementById("inter3").value)
+    }
+
+    return {
+        start_note: parseInt(startNote.value),
+        sequence_type: sequenceType,
+        tempo: tempo.value,
+        harmony: harmony.checked,
+        harmony_type: harmony.checked ? harmonyType.value : null,
+        note_length: parseFloat(noteLength.value),
+        octave: document.getElementById("octave").checked ? 1 : 2,
+        bass_clef: document.getElementById("bassClef").checked,
+        discard_closure: document.getElementById("discardClosure").checked,
+        bpm: parseInt(bpmSlider.value), // ✅ BPM
+        midi_min: parseInt(document.getElementById("pitchRangeMin").value),
+        midi_max: parseInt(document.getElementById("pitchRangeMax").value),
+        ...params
+    }
+}
+
+
+function resetApp(){
+    if(typeof pcReset==='function') pcReset()
+    // pulisce lo spartito prima del reload
+    document.getElementById("score").innerHTML = ""
+    midiData = null
+    midiBlobGlobal = null
+
+    // valori principali richiesti
+    document.getElementById("sequenceType").value = "Binary"
+    document.getElementById("tempo").value = "sequence-constrained"
+    document.getElementById("startNote").value = "0" // C
+
+    // trigger UI collegata
+    document.getElementById("sequenceType").dispatchEvent(new Event("change"))
+    document.getElementById("tempo").dispatchEvent(new Event("change"))
+
+    // reset Multidimensional
+    document.getElementById("multiK").value = 8
+    document.getElementById("multiKWrap").style.display = "none"
+    document.getElementById("multidimensionalParams").style.display = "none"
+    document.getElementById("multiRow1").innerHTML = ""
+    document.getElementById("multiRow2").innerHTML = ""
+    const krLink = document.getElementById("kRandomLink")
+    if(krLink) krLink.style.display = "none"
+
+    // reset checkbox
+    document.getElementById("octave").checked = false
+    document.getElementById("harmony").checked = false
+    document.getElementById("bassClef").checked = false
+    document.getElementById("discardClosure").checked = false
+    document.getElementById("metronome").checked = false
+    document.getElementById("swing").checked = false
+    document.getElementById("swingAmount").value = 62
+    document.getElementById("swingLabel").textContent = "62%"
+
+    // reset label/UI
+    document.getElementById("harmonyOptions").style.display = "none"
+
+    // opzionale: reset BPM
+    document.getElementById("bpmSlider").value = 100
+    document.getElementById("bpmValue").textContent = "100"
+
+    location.reload()
+}
+
+document.getElementById("tempo").addEventListener("change", function(){
+    document.getElementById("constantOptions").style.display =
+        this.value === "constant" ? "block" : "none"
+})
+
+function updateHarmonyUI() {
+    const harmonyChecked = document.getElementById("harmony").checked
+    const options = document.getElementById("harmonyOptions")
+    const harmonyTypeRow = document.getElementById("harmonyTypeRow")
+
+    options.style.display = "none"
+
+    if (!harmonyChecked) return
+
+    // armonia e selettore tipo disponibili per tutti i tipi di tempo
+    options.style.display = "block"
+    harmonyTypeRow.style.display = "block"
+}
+
+document.getElementById("harmony").addEventListener("change", updateHarmonyUI)
+document.getElementById("tempo").addEventListener("change", updateHarmonyUI)
+
+async function checkServer() {
+    if (ENV === "local") return   // in locale non serve il check
+
+    try {
+        const res = await fetch(`${BASE_URL}/health`)
+        if (res.ok) {
+            serverAwake = true
+            document.getElementById("serverStatus").style.display = "none"
+        } else {
+            retryCheck()
+        }
+    } catch (e) {
+        retryCheck()
+    }
+}
+
+function retryCheck() {
+    setTimeout(checkServer, 3000)
+}
+
+checkServer()
+
+// ERA COSI:
+
+// //✅ MODALITÀ LOCALE: server considerato sempre attivo
+// let serverAwake = true;
+// // let serverAwake = false;
+// async function checkServer() {
+//     try {
+//         const res = await fetch("http://localhost:5000/health");
+//         serverAwake = res.ok;
+//         if (!res.ok) console.warn("Backend locale non risponde su /health");
+//     } catch (e) {
+//         console.warn("Backend locale non raggiungibile:", e.message);
+//         // In locale non blocchiamo l'app, ma avvisiamo in console
+//     }
+// }
+//
+// checkServer(); // check opzionale, non bloccante
+
+
+// // MODALITA' REMOTA
+// let serverAwake = false;
+//
+// async function checkServer() {
+//     try {
+//         const res = await fetch("https://serie.onrender.com/health");
+//
+//         if (res.ok) {
+//             serverAwake = true;
+//             document.getElementById("serverStatus").style.display = "none";
+//         } else {
+//             retryCheck();
+//         }
+//
+//     } catch (e) {
+//         retryCheck();
+//     }
+// }
+//
+// function retryCheck() {
+//     setTimeout(checkServer, 3000); // retry ogni 3s
+// }
+//
+// checkServer();
+
+
+async function generateMusic(){
+
+if(!serverAwake){
+    alert("⏳ The server is still starting up");
+    return;
+}
+
+showLoading(); // 👈 AGGIUNTO
+loadingOverlay.innerText = "⏳ Generating MIDI..."; // 👈 QUI
+
+try {
+
+    const params = getParams()
+
+
+    const midiRes = await fetch(`${BASE_URL}/generate`, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(params)
+    })
+
+    // const midiRes = await fetch("http://localhost:5000/generate", {
+    //     method: "POST",
+    //     headers: {"Content-Type":"application/json"},
+    //     body: JSON.stringify(params)
+    // })
+    // const midiRes = await fetch("https://serie.onrender.com/generate", {
+    //     method: "POST",
+    //     headers: {"Content-Type":"application/json"},
+    //     body: JSON.stringify(params)
+    // })
+
+    const midiBlob = await midiRes.blob()
+    midiBlobGlobal = midiBlob
+    const midiBuffer = await midiBlob.arrayBuffer()
+    midiData = new Midi(midiBuffer)
+
+    const scoreRes = await fetch(`${BASE_URL}/score`, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(params)
+    })
+
+    // const scoreRes = await fetch("http://localhost:5000/score", {
+    //     method: "POST",
+    //     headers: {"Content-Type":"application/json"},
+    //     body: JSON.stringify(params)
+    // })
+    // const scoreRes = await fetch("https://serie.onrender.com/score", {
+    //     method: "POST",
+    //     headers: {"Content-Type":"application/json"},
+    //     body: JSON.stringify(params)
+    // })
+
+    const scoreBlob = await scoreRes.blob()
+    const scoreUrl = URL.createObjectURL(scoreBlob)
+
+    loadingOverlay.innerText = "🖊 Rendering notation..."; // 👈 QUI
+
+    await osmd.load(scoreUrl)
+    osmd.render()
+
+    // Rimuove lo spazio vuoto superiore generato da OSMD
+    const svg = document.querySelector("#score svg")
+    if (svg) {
+        const bbox = svg.getBBox()
+        const offsetY = bbox.y
+        svg.style.marginTop = `-${Math.max(0, offsetY - 20)}px`
+    }
+
+} catch (err) {
+    console.error(err);
+    alert("Errore durante la generazione");
+} finally {
+    hideLoading(); // 👈 SEMPRE eseguito
+}
+}
+
+function toggleInversion(){
+    inversionActive = !inversionActive
+    generateMusic()
+}
+
+function highlightButton(type){
+    document.querySelectorAll(".button-row button")
+        .forEach(b => b.style.background = "#3498db")
+
+    event.target.style.background = "#9b59b6"
+}
+
+
+async function sendTransform(payload){
+
+    showLoading();
+    loadingOverlay.innerText = "🔄 Applying transformation..."; // 👈 QUI
+
+    // Aggiungi sempre il range di pitch al payload
+    payload.midi_min = parseInt(document.getElementById("pitchRangeMin").value);
+    payload.midi_max = parseInt(document.getElementById("pitchRangeMax").value);
+
+    try {
+
+        const midiRes = await fetch(`${BASE_URL}/transform`, {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify(payload)
+        })
+
+        // const midiRes = await fetch("http://localhost:5000/transform", {
+        //     method: "POST",
+        //     headers: {"Content-Type":"application/json"},
+        //     body: JSON.stringify(payload)
+        // })
+        // const midiRes = await fetch("https://serie.onrender.com/transform", {
+        //     method: "POST",
+        //     headers: {"Content-Type":"application/json"},
+        //     body: JSON.stringify(payload)
+        // })
+
+        const midiBlob = await midiRes.blob()
+        midiBlobGlobal = midiBlob
+
+        const midiBuffer = await midiBlob.arrayBuffer()
+        midiData = new Midi(midiBuffer)
+
+        const scoreRes = await fetch(`${BASE_URL}/score`, {
+            method: "POST"
+        })
+
+        // const scoreRes = await fetch("http://localhost:5000/score", {
+        //     method: "POST"
+        // })
+        // const scoreRes = await fetch("https://serie.onrender.com/score", {
+        //     method: "POST"
+        // })
+
+        const scoreBlob = await scoreRes.blob()
+        const scoreUrl = URL.createObjectURL(scoreBlob)
+
+        loadingOverlay.innerText = "🖊 Rendering notation..."; // 👈 QUI
+
+        await osmd.load(scoreUrl)
+        osmd.render()
+
+        // Rimuove lo spazio vuoto superiore generato da OSMD
+        const svg = document.querySelector("#score svg")
+        if (svg) {
+            const bbox = svg.getBBox()
+            const offsetY = bbox.y
+            svg.style.marginTop = `-${Math.max(0, offsetY - 20)}px`
+        }
+
+    } finally {
+        hideLoading();
+    }
+}
+
+async function transform(type){
+    if(!midiData){
+        alert("Generate music first!")
+        return
+    }
+
+    let payload = { operation: type }
+
+    // se è trasposizione, aggiungi valore
+    if(type === "T"){
+        document.getElementById("transposeControl").style.display = "block"
+        return
+    }
+
+    sendTransform(payload)
+}
+
+
+async function rythm_transform(type){
+    if(!midiData){
+        alert("Generate music first!")
+        return
+    }
+
+    let payload = { operation: type }
+
+    sendTransform(payload)
+}
+
+// ── Metronome ──────────────────────────────────────────────────────────────
+let metronomePart = null
+
+/**
+ * Genera un singolo click via Web Audio API pura (nessun Tone.js synth).
+ * @param {AudioContext} ctx
+ * @param {number} when  - AudioContext time (sec) in cui suonare
+ * @param {boolean} strong - true = beat 1 (accentato)
+ * @param {string} mode  - 'noise' | 'beep' | 'wood'
+ */
+function scheduleClick(ctx, when, strong, mode) {
+    const volSlider = document.getElementById('metronomeVolume')
+    const volFactor = volSlider ? (parseFloat(volSlider.value) / 100) : 1.0
+
+    const gainNode = ctx.createGain()
+    gainNode.connect(ctx.destination)
+
+    if (mode === 'noise') {
+        // Burst di rumore bianco breve — stile DAW
+        const bufSize = ctx.sampleRate * 0.025   // 25 ms
+        const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate)
+        const data = buf.getChannelData(0)
+        for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1)
+        const src = ctx.createBufferSource()
+        src.buffer = buf
+
+        // Filtro passa-alto per togliere i bassi e renderlo più "snappy"
+        const hp = ctx.createBiquadFilter()
+        hp.type = 'highpass'
+        hp.frequency.value = strong ? 1200 : 2000
+        src.connect(hp)
+        hp.connect(gainNode)
+
+        gainNode.gain.setValueAtTime((strong ? 0.9 : 0.45) * volFactor, when)
+        gainNode.gain.exponentialRampToValueAtTime(0.001, when + 0.025)
+        src.start(when)
+        src.stop(when + 0.03)
+
+    } else if (mode === 'beep') {
+        // Oscillatore sinusoidale a breve durata
+        const osc = ctx.createOscillator()
+        osc.type = 'sine'
+        osc.frequency.value = strong ? 1760 : 1047  // A6 / C6
+        osc.connect(gainNode)
+        gainNode.gain.setValueAtTime((strong ? 0.7 : 0.35) * volFactor, when)
+        gainNode.gain.exponentialRampToValueAtTime(0.001, when + 0.05)
+        osc.start(when)
+        osc.stop(when + 0.055)
+
+    } else if (mode === 'wood') {
+        // Simulazione wood block: sine breve + piccolo filtro bandpass
+        const bufSize = ctx.sampleRate * 0.015
+        const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate)
+        const data = buf.getChannelData(0)
+        const freq = strong ? 900 : 1400
+        for (let i = 0; i < bufSize; i++) {
+            const t = i / ctx.sampleRate
+            data[i] = Math.sin(2 * Math.PI * freq * t) * Math.exp(-t * 300)
+        }
+        const src = ctx.createBufferSource()
+        src.buffer = buf
+        src.connect(gainNode)
+        gainNode.gain.setValueAtTime((strong ? 1.0 : 0.55) * volFactor, when)
+        src.start(when)
+        src.stop(when + 0.02)
+    }
+}
+
+function startMetronome(currentBPM, numBeats) {
+    stopMetronome()
+
+    const beatDuration = 60 / currentBPM
+    const mode = document.getElementById('metronomeSound').value
+
+    const metEvents = []
+    for (let i = 0; i < numBeats; i++) {
+        metEvents.push({ time: i * beatDuration, beat: i })
+    }
+
+    metronomePart = new Tone.Part((time, val) => {
+        const ctx = Tone.getContext().rawContext
+        const strong = (val.beat % 4 === 0)
+        scheduleClick(ctx, time, strong, mode)
+    }, metEvents)
+
+    metronomePart.start(0)
+}
+
+function stopMetronome() {
+    if (metronomePart) {
+        metronomePart.stop()
+        metronomePart.dispose()
+        metronomePart = null
+    }
+}
+// ── Fine Metronome ──────────────────────────────────────────────────────────
+
+// ── Pause / Continue state ──────────────────────────────────────────────────
+let isPaused = false
+
+function pauseResumeMusic() {
+    const pauseBtn = document.getElementById('pauseBtn')
+    if (!isPaused) {
+        // Pausa: fermo il Transport (mantiene la posizione)
+        Tone.Transport.pause()
+        stopMetronome()
+        isPaused = true
+        pauseBtn.textContent = 'Continue'
+        pauseBtn.style.background = '#27ae60'
+    } else {
+        // Riprendi: riavvio metronomo se necessario e faccio resume
+        if (document.getElementById("metronome").checked) {
+            const currentBPM = parseInt(bpmSlider.value)
+            const beatsRaw = midiData.duration / 0.5
+            const numBeats = Math.ceil(beatsRaw / 4) * 4
+            startMetronome(currentBPM, numBeats)
+        }
+        Tone.Transport.start()
+        isPaused = false
+        pauseBtn.textContent = 'Pause'
+        pauseBtn.style.background = '#e67e22'
+    }
+}
+// ── Fine Pause / Continue ───────────────────────────────────────────────────
+
+async function playMusic(){
+
+    if(!midiData) return
+
+    await Tone.start()
+    Tone.Transport.stop()
+    Tone.Transport.cancel()
+
+    // BPM impostato subito, prima di schedulare qualsiasi evento
+    const baseBPM = 120
+    const currentBPM = parseInt(bpmSlider.value)
+    const scale = baseBPM / currentBPM
+    Tone.Transport.bpm.value = currentBPM
+
+    const context = Tone.getContext().rawContext
+    const isSaxBb = document.getElementById("instrSaxBb").checked
+
+    // Carica i soundfont necessari
+    synth = await Soundfont.instrument(context, "acoustic_grand_piano")
+    let synthSax = null
+    if (isSaxBb) {
+        synthSax = await Soundfont.instrument(context, "tenor_sax")
+    }
+
+    // Trasposizione Bb: +2 semitoni per compensare (lo strumento legge Bb come C)
+    // Usa Tone.Frequency per spostare il nome della nota di N semitoni
+    function transposeName(noteName, semitones) {
+        const midi = Tone.Frequency(noteName).toMidi() + semitones
+        return Tone.Frequency(midi, "midi").toNote()
+    }
+
+    let events = []
+    midiData.tracks.forEach((track, trackIndex) => {
+        track.notes.forEach(note => {
+            const noteName = isSaxBb ? transposeName(note.name, -2) : note.name
+            events.push({
+                time: note.time * scale,
+                note: noteName,
+                duration: note.duration * scale,
+                velocity: note.velocity,
+                isHarmony: trackIndex > 0
+            })
+        })
+    })
+
+    // ── Swing ──────────────────────────────────────────────────────────────
+    if (document.getElementById("swing").checked) {
+        const swingRatio = parseInt(document.getElementById("swingAmount").value) / 100
+        // Durata di un ottavo scalata (a 120 BPM un ottavo = 0.25s)
+        const eighth = 0.25 * scale          // durata ottavo in sec di Transport
+        const quarter = eighth * 2           // durata quarto
+
+        // Identifica la griglia degli ottavi: posizioni 0, eighth, 2*eighth, ...
+        // Un ottavo "off-beat" è quello che cade in posizione dispari nella griglia
+        // (0 = on-beat, 1 = off-beat, 2 = on-beat, ...)
+        const sixteenth = eighth * 0.5        // durata sedicesimo
+        const tolerance = eighth * 0.05       // tolleranza 5% per errori floating point
+
+        events = events.map(ev => {
+            // Swing agisce solo sulla melodia e solo sugli ottavi
+            if (ev.isHarmony) return ev
+            if (ev.duration < sixteenth + tolerance) return ev
+
+            // Indice nella griglia degli ottavi
+            const gridIndex = Math.round(ev.time / eighth)
+            const isOffBeat = (gridIndex % 2 === 1)
+
+            if (!isOffBeat) return ev        // on-beat: nessuna modifica
+
+            // Posizione ideale on-beat precedente e successiva
+            const onBeatBefore = (gridIndex - 1) * eighth
+            const onBeatAfter  = (gridIndex + 1) * eighth
+
+            // Il beat on-beat precedente diventa l'inizio della coppia
+            // La nota off-beat viene spostata a: onBeatBefore + quarter * swingRatio
+            const newTime     = onBeatBefore + quarter * swingRatio
+            const newDuration = onBeatAfter  - newTime   // riempie fino al prossimo on-beat
+
+            return { ...ev, time: newTime, duration: Math.max(newDuration, eighth * 0.2) }
+        })
+    }
+    // ── Fine Swing ──────────────────────────────────────────────────────────
+
+    part = new Tone.Part((time, value)=>{
+        // In Sax Bb mode: melodia (track 0) → tenor_sax, armonia (track 1+) → piano
+        const player = (synthSax && !value.isHarmony) ? synthSax : synth
+        player.play(value.note, time, {
+            duration: value.duration,
+            gain: value.velocity
+        })
+    }, events)
+
+    // Metronomo schedulato prima di Transport.start(), insieme alla part
+    if (document.getElementById("metronome").checked) {
+        // midiData.duration è in secondi a 120 BPM → 1 beat = 0.5s
+        const beatsRaw = midiData.duration / 0.5
+        // Arrotonda alla battuta completa (4/4)
+        const numBeats = Math.ceil(beatsRaw / 4) * 4
+        startMetronome(currentBPM, numBeats)
+    }
+
+    part.start(0)
+    Tone.Transport.start()
+    pcPlay()
+
+    // Resetta stato Pause
+    isPaused = false
+    const pauseBtn = document.getElementById('pauseBtn')
+    pauseBtn.textContent = 'Pause'
+    pauseBtn.style.background = '#e67e22'
+}
+
+function stopMusic(){
+    Tone.Transport.stop()
+    Tone.Transport.cancel()
+    if(part) { part.stop(); part.dispose(); part = null }
+    stopMetronome()
+    pcStop()
+
+    // Resetta stato Pause
+    isPaused = false
+    const pauseBtn = document.getElementById('pauseBtn')
+    pauseBtn.textContent = 'Pause'
+    pauseBtn.style.background = '#e67e22'
+}
+
+// function downloadMidi(){
+//     if(!midiBlobGlobal){
+//         alert("Generate MIDI first!")
+//         return
+//     }
+
+//     const url = URL.createObjectURL(midiBlobGlobal)
+
+//     const a = document.createElement("a")
+//     a.href = url
+//     a.download = "generated_music.mid"
+//     document.body.appendChild(a)
+//     a.click()
+
+//     document.body.removeChild(a)
+//     URL.revokeObjectURL(url)
+// }
+
+function downloadMidi(){
+    if(!midiBlobGlobal){
+        alert("Generate MIDI first!")
+        return
+    }
+
+    // ── MIDI ──
+    const urlMid = URL.createObjectURL(midiBlobGlobal)
+    const aMid = document.createElement("a")
+    aMid.href = urlMid
+    aMid.download = "generated_music.mid"
+    document.body.appendChild(aMid)
+    aMid.click()
+    document.body.removeChild(aMid)
+    URL.revokeObjectURL(urlMid)
+
+    // ── TXT ──
+    const PC_LABELS = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B']
+    const startNoteVal = parseInt(document.getElementById("startNote").value)
+    const startNote    = PC_LABELS[startNoteVal]
+    const seqType      = document.getElementById("sequenceType").value
+    const tempo        = document.getElementById("tempo").value
+    const harmonyOn    = document.getElementById("harmony").checked
+    const harmonyType  = harmonyOn ? document.getElementById("harmonyType").value : "none"
+
+    let seqParams = ""
+    if(seqType === "Binary"){
+        seqParams = ` ${document.getElementById("interval").value} ${document.getElementById("leap").value}`
+    } else if(seqType === "Quaternary"){
+        seqParams = ` ${document.getElementById("interval1").value} ${document.getElementById("leap1").value} ${document.getElementById("interval2").value} ${document.getElementById("leap2").value}`
+    } else if(seqType === "Senary"){
+        seqParams = ` ${document.getElementById("int1").value} ${document.getElementById("lea1").value} ${document.getElementById("int2").value} ${document.getElementById("lea2").value} ${document.getElementById("int3").value} ${document.getElementById("lea3").value}`
+    } else if(seqType === "Ternary"){
+        seqParams = ` ${document.getElementById("inter1").value} ${document.getElementById("inter2").value} ${document.getElementById("inter3").value}`
+    } else if(seqType === "Multidimensional"){
+        const k = Math.min(12, Math.max(1, parseInt(document.getElementById("multiK").value) || 1))
+        const vals = []
+        for(let i = 1; i <= k; i++){
+            const el = document.getElementById(`multi_i${i}`)
+            vals.push(el ? el.value : 0)
+        }
+        seqParams = ` ${vals.join(" ")}`
+    }
+
+    let tempoDetail = tempo
+    if(tempo === "constant"){
+        const noteLen = document.getElementById("noteLength").value
+        const lenLabels = {"4":"whole","2":"half","1":"quarter","0.5":"eighth","0.25":"sixteenth"}
+        tempoDetail = `constant (${lenLabels[noteLen] || noteLen})`
+    }
+
+    const content =
+`GeCo-Tool — Generation Parameters
+===================================
+Start Note:    ${startNote}
+Sequence:      ${seqType}${seqParams}
+Tempo:         ${tempoDetail}
+Harmony:       ${harmonyType}
+`
+    const blob = new Blob([content], { type: "text/plain" })
+    const urlTxt = URL.createObjectURL(blob)
+    const aTxt = document.createElement("a")
+    aTxt.href = urlTxt
+    aTxt.download = "generated_music.txt"
+    document.body.appendChild(aTxt)
+    aTxt.click()
+    document.body.removeChild(aTxt)
+    URL.revokeObjectURL(urlTxt)
+}
+
+async function importMidi(input) {
+    const allFiles = Array.from(input.files)
+    const midiFile = allFiles.find(f => f.name.endsWith('.mid') || f.name.endsWith('.midi'))
+    const txtFile  = allFiles.find(f => f.name.endsWith('.txt'))
+
+    // Resetta l'input così lo stesso file può essere riselezionato
+    input.value = ""
+
+    // ── Caso: solo TXT ────────────────────────────────────────────────────────
+    // Applica i parametri dal file e genera normalmente la sequenza.
+    if (!midiFile && txtFile) {
+        showLoading()
+        loadingOverlay.innerText = "📄 Reading parameters..."
+        try {
+            const txt = await txtFile.text()
+            applyParamsFromTxt(txt)
+            // generateMusic() gestisce il proprio showLoading/hideLoading
+            await generateMusic()
+        } catch (err) {
+            console.error(err)
+            alert("Errore durante il caricamento del TXT: " + err.message)
+        } finally {
+            hideLoading()
+        }
+        return
+    }
+
+    // ── Nessun file utile ────────────────────────────────────────────────────
+    if (!midiFile) return
+
+    showLoading()
+    loadingOverlay.innerText = "📂 Importing MIDI..."
+
+    try {
+        // 1. Invia il file al backend /import
+        const formData = new FormData()
+        formData.append("midi", midiFile)
+
+        // Aggiungi i parametri che servono a rigenera_armonia
+        formData.append("sequence_type", document.getElementById("sequenceType").value)
+        formData.append("harmony_type", document.getElementById("harmonyType").value)
+        formData.append("tempo", document.getElementById("tempo").value)
+
+        const importRes = await fetch(`${BASE_URL}/import`, {
+            method: "POST",
+            body: formData   // NON impostare Content-Type: lo fa il browser con boundary corretto
+        })
+
+        if (!importRes.ok) {
+            throw new Error("Import failed: " + importRes.statusText)
+        }
+
+        // 2. Carica il MIDI in @tonejs/midi (per playback)
+        const midiBuffer = await midiFile.arrayBuffer()
+        midiData = new Midi(midiBuffer)
+        midiBlobGlobal = new Blob([midiBuffer], { type: "audio/midi" })
+
+        // ── Caso: MIDI + TXT ─────────────────────────────────────────────────
+        // Aggiorna i parametri UI dal TXT, ma usa il MIDI già importato
+        // senza rigenerare (così la sequenza salvata non cambia).
+        if (txtFile) {
+            const txt = await txtFile.text()
+            applyParamsFromTxt(txt)
+            // Usa lo score restituito dal backend /import (basato sul MIDI caricato)
+            const scoreBlob = await importRes.blob()
+            const scoreUrl = URL.createObjectURL(scoreBlob)
+            loadingOverlay.innerText = "🖊 Rendering notation..."
+            await osmd.load(scoreUrl)
+            osmd.render()
+            const svg = document.querySelector("#score svg")
+            if (svg) {
+                const bbox = svg.getBBox()
+                const offsetY = bbox.y
+                svg.style.marginTop = `-${Math.max(0, offsetY - 20)}px`
+            }
+            return
+        }
+
+        // ── Caso: solo MIDI ───────────────────────────────────────────────────
+        // Usa direttamente lo score restituito dal backend, senza rigenerare.
+        const scoreBlob = await importRes.blob()
+        const scoreUrl = URL.createObjectURL(scoreBlob)
+
+        loadingOverlay.innerText = "🖊 Rendering notation..."
+        await osmd.load(scoreUrl)
+        osmd.render()
+
+        // Rimuove lo spazio vuoto superiore generato da OSMD
+        const svg = document.querySelector("#score svg")
+        if (svg) {
+            const bbox = svg.getBBox()
+            const offsetY = bbox.y
+            svg.style.marginTop = `-${Math.max(0, offsetY - 20)}px`
+        }
+
+    } catch (err) {
+        console.error(err)
+        alert("Errore durante l'import: " + err.message)
+    } finally {
+        hideLoading()
+    }
+}
+
+
+// ── Contextual help panel ──────────────────────────────────────────
+const helpPanel = document.getElementById("helpPanel")
+const helpDefault = "<em>Hover over or focus any control to see its description.</em>"
+
+function showHelp(el) {
+    const msg = el.dataset.help || el.closest("[data-help]")?.dataset.help
+    if (msg) helpPanel.innerHTML = msg
+}
+
+function clearHelp() {
+    helpPanel.innerHTML = helpDefault
+}
+
+document.querySelectorAll("[data-help]").forEach(el => {
+    el.addEventListener("mouseover",  e => { showHelp(e.currentTarget); e.stopPropagation() })
+    el.addEventListener("focusin",    e => { showHelp(e.currentTarget); e.stopPropagation() })
+    el.addEventListener("mouseout",   clearHelp)
+    el.addEventListener("focusout",   clearHelp)
+})
+// ───────────────────────────────────────────────────────────────────
+
+// ── PITCH-CLASS CIRCLE ─────────────────────────────────────────────────────
+;(function(){
+    const PC_NAMES = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B']
+    const R  = 76    // radius of node centres (scaled for 220px viewBox)
+    const RN = 10    // node radius
+    const NS = 'http://www.w3.org/2000/svg'
+    const svg = document.getElementById('pcCircle')
+
+    function pcAngle(pc){ return (pc/12)*2*Math.PI - Math.PI/2 }
+    function polar(r,a){ return { x: r*Math.cos(a), y: r*Math.sin(a) } }
+
+    function mkEl(tag, attrs, parent){
+        const e = document.createElementNS(NS, tag)
+        for(const [k,v] of Object.entries(attrs)) e.setAttribute(k,v)
+        if(parent) parent.appendChild(e)
+        return e
+    }
+
+    // build
+    ;(function build(){
+        svg.innerHTML = ''
+        const defs = mkEl('defs',{},svg)
+
+        // glow
+        const flt = mkEl('filter',{id:'pcGlow',x:'-80%',y:'-80%',width:'260%',height:'260%'},defs)
+        mkEl('feGaussianBlur',{stdDeviation:'3',result:'blur'},flt)
+        const fm = mkEl('feMerge',{},flt)
+        mkEl('feMergeNode',{in:'blur'},fm)
+        mkEl('feMergeNode',{in:'SourceGraphic'},fm)
+
+        // arrowhead
+        const mk = mkEl('marker',{id:'pcArr',markerWidth:'6',markerHeight:'6',refX:'5',refY:'3',orient:'auto'},defs)
+        mkEl('path',{d:'M0,0 L0,6 L6,3 z',fill:'#c8b87a'},mk)
+
+        // bg
+        const gr = mkEl('radialGradient',{id:'pcBg',cx:'50%',cy:'50%',r:'50%'},defs)
+        mkEl('stop',{offset:'0%','stop-color':'#1a1a28'},gr)
+        mkEl('stop',{offset:'100%','stop-color':'#0a0a0f'},gr)
+        mkEl('circle',{r:105,fill:'#3498db',stroke:'#2980b9','stroke-width':'1'},svg)
+        mkEl('circle',{r:46,fill:'none',stroke:'#2980b9','stroke-width':'1','stroke-dasharray':'2 4'},svg)
+
+        // spokes
+        for(let pc=0;pc<12;pc++){
+            const p = polar(R-RN-1,pcAngle(pc))
+            mkEl('line',{x1:0,y1:0,x2:p.x,y2:p.y,stroke:'#2980b9','stroke-width':'0.7'},svg)
+        }
+
+        // arc layer
+        mkEl('g',{id:'pcArcLayer'},svg)
+
+        // nodes
+        for(let pc=0;pc<12;pc++){
+            const pos = polar(R,pcAngle(pc))
+            const lp  = polar(R+RN+8,pcAngle(pc))
+            const g = mkEl('g',{id:`pcNd-${pc}`,transform:`translate(${pos.x},${pos.y})`},svg)
+            mkEl('circle',{id:`pcGl-${pc}`,r:RN+4,fill:'none',stroke:'rgba(240,228,176,0.35)','stroke-width':'2',opacity:'0'},g)
+            mkEl('circle',{id:`pcCi-${pc}`,r:RN,fill:'#2471a3',stroke:'#aed6f1','stroke-width':'1'},g)
+            mkEl('text',{id:`pcLb-${pc}`,'text-anchor':'middle','dominant-baseline':'central',
+                fill:'#d6eaf8','font-family':'Arial,sans-serif','font-size':'7'},g).textContent = PC_NAMES[pc]
+            mkEl('text',{x:lp.x-pos.x,y:lp.y-pos.y,'text-anchor':'middle','dominant-baseline':'central',
+                fill:'#aed6f1','font-family':'Arial,sans-serif','font-size':'6'},g).textContent = pc
+        }
+    })()
+
+    // node state
+    const nodeState = new Array(12).fill('off')
+    function renderNode(pc){
+        const ci = document.getElementById(`pcCi-${pc}`)
+        const gl = document.getElementById(`pcGl-${pc}`)
+        const lb = document.getElementById(`pcLb-${pc}`)
+        const s  = nodeState[pc]
+        if(s==='active'){
+            ci.setAttribute('fill','#f0e4b0'); ci.setAttribute('stroke','#f0e4b0')
+            ci.setAttribute('filter','url(#pcGlow)'); gl.setAttribute('opacity','0.8')
+            lb.setAttribute('fill','#0a0a0f')
+        } else if(s==='visited'){
+            ci.setAttribute('fill','#3a3255'); ci.setAttribute('stroke','#4a4270')
+            ci.removeAttribute('filter'); gl.setAttribute('opacity','0')
+            lb.setAttribute('fill','#8878b8')
+        } else {
+            ci.setAttribute('fill','#2471a3'); ci.setAttribute('stroke','#aed6f1')
+            ci.removeAttribute('filter'); gl.setAttribute('opacity','0')
+            lb.setAttribute('fill','#d6eaf8')
+        }
+    }
+    function resetNodes(){ for(let pc=0;pc<12;pc++){nodeState[pc]='off';renderNode(pc)} }
+
+    // arc drawing
+    const arcMap = {}
+    function resetArcs(){
+        const l=document.getElementById('pcArcLayer'); if(l) l.innerHTML=''
+        for(const k in arcMap) delete arcMap[k]
+    }
+    function drawArc(from,to){
+        if(from===to) return
+        const key=`${from}-${to}`
+        const layer=document.getElementById('pcArcLayer')
+        if(arcMap[key]){
+            arcMap[key].count++
+            arcMap[key].el.setAttribute('stroke-width',String(Math.min(1.2+arcMap[key].count*0.7,5)))
+            return
+        }
+        const A=polar(R,pcAngle(from)), B=polar(R,pcAngle(to))
+        const mx=(A.x+B.x)/2, my=(A.y+B.y)/2
+        const dx=B.x-A.x, dy=B.y-A.y, len=Math.sqrt(dx*dx+dy*dy)||1
+        const side=from<to?1:-1, bulge=22*side
+        const cx=mx-(dy/len)*bulge, cy=my+(dx/len)*bulge
+        const stx=cx-A.x,sty=cy-A.y,stl=Math.sqrt(stx*stx+sty*sty)||1
+        const sx=A.x+(stx/stl)*(RN+1), sy=A.y+(sty/stl)*(RN+1)
+        const etx=B.x-cx,ety=B.y-cy,etl=Math.sqrt(etx*etx+ety*ety)||1
+        const ex=B.x-(etx/etl)*(RN+3), ey=B.y-(ety/etl)*(RN+3)
+        const pathEl=mkEl('path',{
+            d:`M${sx},${sy} Q${cx},${cy} ${ex},${ey}`,
+            fill:'none',stroke:'#c8b87a','stroke-width':'1.2',
+            'stroke-opacity':'0.6','stroke-linecap':'round','marker-end':'url(#pcArr)'
+        },layer)
+        arcMap[key]={count:1,el:pathEl}
+    }
+
+    // active tracking
+    const activePCs = new Set()
+    let lastPC=null, firstPC=null, firstArcEl=null, lastArcEl=null
+
+    function activatePC(pc){
+        if(lastPC!==null && lastPC!==pc){
+            const key=`${lastPC}-${pc}`, wasNew=!arcMap[key]
+            drawArc(lastPC,pc)
+            if(wasNew){
+                const el=arcMap[key].el
+                if(!firstArcEl){
+                    firstArcEl=el
+                    el.setAttribute('stroke','#ffffff')
+                    el.setAttribute('stroke-opacity','0.9')
+                    el.setAttribute('stroke-width','2')
+                }
+                lastArcEl=el
+            }
+        }
+        if(firstPC===null) firstPC=pc
+        lastPC=pc
+        activePCs.add(pc)
+        nodeState[pc]='active'
+        renderNode(pc)
+    }
+    function deactivatePC(pc){
+        if(pc===firstPC) return   // il primo nodo resta sempre acceso
+        activePCs.delete(pc)
+        nodeState[pc]='visited'
+        renderNode(pc)
+    }
+    function highlightEnd(){
+        if(lastPC!==null && lastPC!==firstPC){nodeState[lastPC]='active';renderNode(lastPC)}
+        if(lastArcEl && lastArcEl!==firstArcEl){
+            lastArcEl.setAttribute('stroke','#ffffff')
+            lastArcEl.setAttribute('stroke-opacity','0.9')
+            lastArcEl.setAttribute('stroke-width',String(Math.max(parseFloat(lastArcEl.getAttribute('stroke-width')||1.2),2)))
+        }
+    }
+
+    // timers
+    let pcTimers=[], pcPlaying=false
+
+    window.pcPlay = function(){
+        if(!midiData) return
+        pcStop()
+        resetNodes(); resetArcs()
+        lastPC=null; firstPC=null; firstArcEl=null; lastArcEl=null; activePCs.clear()
+
+        // melody = first track with notes
+        const track = midiData.tracks.find(t=>t.notes.length>0)
+        if(!track) return
+
+        // accende subito il primo nodo — resterà illuminato per tutto il playback
+        const firstNote = track.notes[0].midi % 12
+        firstPC = firstNote
+        activatePC(firstNote)
+
+        const scale = 120 / parseInt(bpmSlider.value)  // same BPM scaling as playMusic
+        pcPlaying = true
+
+        track.notes.forEach(note => {
+            const pc    = note.midi % 12
+            const onMs  = note.time  * scale * 1000
+            const offMs = (note.time + Math.max(note.duration,0.05)) * scale * 1000
+            pcTimers.push(setTimeout(()=>{ if(pcPlaying) activatePC(pc)   }, onMs))
+            pcTimers.push(setTimeout(()=>{ if(pcPlaying) deactivatePC(pc) }, offMs))
+        })
+
+        const endMs = track.notes.reduce((mx,n)=>Math.max(mx,(n.time+n.duration)*scale*1000),0) + 400
+        pcTimers.push(setTimeout(()=>{ pcPlaying=false; highlightEnd() }, endMs))
+    }
+
+    window.pcStop = function(){
+        pcPlaying=false
+        pcTimers.forEach(t=>clearTimeout(t))
+        pcTimers=[]
+    }
+
+    window.pcReset = function(){
+        pcStop(); resetNodes(); resetArcs()
+        lastPC=null; firstPC=null; firstArcEl=null; lastArcEl=null; activePCs.clear()
+    }
+
+})()
+// ── END PITCH-CLASS CIRCLE ─────────────────────────────────────────────────
+
+// ── PDF viewer toggle ──────────────────────────────────────────────────────
+function togglePdfViewer(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.style.display === 'none') {
+        el.style.display = 'block';
+        // reload iframe src to force rendering (some browsers need this)
+        const iframe = el.querySelector('iframe');
+        if (iframe) { const s = iframe.src; iframe.src = ''; iframe.src = s; }
+    } else {
+        el.style.display = 'none';
+    }
+}
+// ── END PDF viewer toggle ──────────────────────────────────────────────────
+
+function applyParamsFromTxt(txt){
+    const line = key => {
+        const match = txt.match(new RegExp(`^${key}:\\s*(.+)$`, 'm'))
+        return match ? match[1].trim() : null
+    }
+
+    // Helper: set hidden input value, update numpad display, and fire events
+    const setField = (id, val) => {
+        const el = document.getElementById(id)
+        if (!el) return
+        el.value = val
+        if (typeof GeCo_NP !== 'undefined') GeCo_NP.setValue(id, String(val))
+        el.dispatchEvent(new Event('input',  { bubbles: true }))
+        el.dispatchEvent(new Event('change', { bubbles: true }))
+    }
+
+    // Start Note
+    const PC_LABELS = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B']
+    const startNote = line('Start Note')
+    if(startNote){
+        const idx = PC_LABELS.indexOf(startNote)
+        if(idx !== -1) document.getElementById('startNote').value = idx
+    }
+
+    // Sequence type + parametri
+    const seqLine = line('Sequence')
+    if(seqLine){
+        const parts = seqLine.split(/\s+/)
+        const seqType = parts[0]
+        const nums = parts.slice(1)
+        const sel = document.getElementById('sequenceType')
+        sel.value = seqType
+        sel.dispatchEvent(new Event('change'))  // aggiorna visibilità pannelli
+
+        if(seqType === 'Binary' && nums.length >= 2){
+            setField('interval', nums[0])
+            setField('leap',     nums[1])
+        } else if(seqType === 'Quaternary' && nums.length >= 4){
+            setField('interval1', nums[0])
+            setField('leap1',     nums[1])
+            setField('interval2', nums[2])
+            setField('leap2',     nums[3])
+        } else if(seqType === 'Senary' && nums.length >= 6){
+            setField('int1', nums[0])
+            setField('lea1', nums[1])
+            setField('int2', nums[2])
+            setField('lea2', nums[3])
+            setField('int3', nums[4])
+            setField('lea3', nums[5])
+        } else if(seqType === 'Ternary' && nums.length >= 3){
+            setField('inter1', nums[0])
+            setField('inter2', nums[1])
+            setField('inter3', nums[2])
+        } else if(seqType === 'Multidimensional' && nums.length >= 1){
+            const k = nums.length
+            // Set multiK first so buildMultiInputs creates the right number of fields
+            setField('multiK', k)
+            buildMultiInputs()
+            // Now overwrite the default values with the actual values from the txt
+            // buildMultiInputs uses GeCo_NP.init() which sets defaults — we overwrite after
+            nums.forEach((val, i) => {
+                const id = `multi_i${i+1}`
+                const el = document.getElementById(id)
+                if (el) {
+                    el.value = val
+                    // Update the numpad display directly (init already ran, just update display)
+                    if (typeof GeCo_NP !== 'undefined') GeCo_NP.setValue(id, String(val))
+                    el.dispatchEvent(new Event('input',  { bubbles: true }))
+                    el.dispatchEvent(new Event('change', { bubbles: true }))
+                }
+            })
+        }
+    }
+
+    // Tempo
+    const tempoVal = line('Tempo')
+    if(tempoVal){
+        const tempoType = tempoVal.split(' ')[0]  // "constant (sixteenth)" → "constant"
+        const tempoSel = document.getElementById('tempo')
+        tempoSel.value = tempoType
+        tempoSel.dispatchEvent(new Event('change'))
+
+        if(tempoType === 'constant'){
+            const lenLabels = {"whole":"4","half":"2","quarter":"1","eighth":"0.5","sixteenth":"0.25"}
+            const match = tempoVal.match(/\((\w+)\)/)
+            if(match && lenLabels[match[1]]){
+                document.getElementById('noteLength').value = lenLabels[match[1]]
+            }
+        }
+    }
+
+    // Harmony
+    const harmonyVal = line('Harmony')
+    if(harmonyVal){
+        const harmonyCheck = document.getElementById('harmony')
+        if(harmonyVal === 'none'){
+            harmonyCheck.checked = false
+        } else {
+            harmonyCheck.checked = true
+            document.getElementById('harmonyType').value = harmonyVal
+        }
+        harmonyCheck.dispatchEvent(new Event('change'))
+    }
+
+    // sync numpad displays for all static fields (safety net)
+    const _npIds = ['interval','leap','interval1','leap1','interval2','leap2',
+                    'int1','lea1','int2','lea2','int3','lea3','inter1','inter2','inter3','multiK']
+    _npIds.forEach(id => {
+        const el = document.getElementById(id)
+        if (el && typeof GeCo_NP !== 'undefined') GeCo_NP.setValue(id, el.value)
+    })
+
+    // Recalculate Jump and Length after all fields are restored
+    if (typeof updateJumpLength === 'function') updateJumpLength()
+}
+
+// ── Jump & Length calculator ───────────────────────────────────────────────
+function gcd(a, b) {
+    a = Math.abs(a); b = Math.abs(b);
+    while (b) { [a, b] = [b, a % b]; }
+    return a;
+}
+
+function updateJumpLength() {
+    const type = document.getElementById('sequenceType').value;
+    let S = 0;  // algebraic sum of all intervals
+    let K = 0;  // cycle multiplier
+
+    if (type === 'Binary') {
+        const iv = parseInt(document.getElementById('interval').value) || 0;
+        const lp = parseInt(document.getElementById('leap').value)    || 0;
+        S = iv + lp;
+        K = 2;
+    } else if (type === 'Quaternary') {
+        const i1 = parseInt(document.getElementById('interval1').value) || 0;
+        const l1 = parseInt(document.getElementById('leap1').value)     || 0;
+        const i2 = parseInt(document.getElementById('interval2').value) || 0;
+        const l2 = parseInt(document.getElementById('leap2').value)     || 0;
+        S = i1 + l1 + i2 + l2;
+        K = 4;
+    } else if (type === 'Senary') {
+        const i1 = parseInt(document.getElementById('int1').value) || 0;
+        const l1 = parseInt(document.getElementById('lea1').value) || 0;
+        const i2 = parseInt(document.getElementById('int2').value) || 0;
+        const l2 = parseInt(document.getElementById('lea2').value) || 0;
+        const i3 = parseInt(document.getElementById('int3').value) || 0;
+        const l3 = parseInt(document.getElementById('lea3').value) || 0;
+        S = i1 + l1 + i2 + l2 + i3 + l3;
+        K = 6;
+    } else if (type === 'Ternary') {
+        const i1 = parseInt(document.getElementById('inter1').value) || 0;
+        const i2 = parseInt(document.getElementById('inter2').value) || 0;
+        const i3 = parseInt(document.getElementById('inter3').value) || 0;
+        S = i1 + i2 + i3;
+        K = 3;
+    } else if (type === 'Multidimensional') {
+        K = Math.min(12, Math.max(1, parseInt(document.getElementById('multiK').value) || 1));
+        for (let i = 1; i <= K; i++) {
+            const el = document.getElementById(`multi_i${i}`);
+            S += el ? (parseInt(el.value) || 0) : 0;
+        }
+    }
+
+    document.getElementById('jumpVal').value = S;
+
+    const g = gcd(Math.abs(S), 12);
+    const length = (12 / g) * K + 1;
+    document.getElementById('lengthVal').value = length;
+}
+
+// Attach listeners to all interval inputs
+function attachJumpLengthListeners() {
+    const ids = [
+        'interval','leap',
+        'interval1','leap1','interval2','leap2',
+        'int1','lea1','int2','lea2','int3','lea3',
+        'inter1','inter2','inter3',
+        'multiK'
+    ];
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', updateJumpLength);
+    });
+
+    // Also listen to dynamically-built multi inputs via delegation
+    document.addEventListener('input', function(e) {
+        if (e.target && e.target.id && e.target.id.startsWith('multi_i')) {
+            updateJumpLength();
+        }
+    });
+
+    document.getElementById('sequenceType').addEventListener('change', function() {
+        // slight delay so multi inputs are built before we read them
+        setTimeout(updateJumpLength, 50);
+    });
+    document.getElementById('multiK').addEventListener('change', function() {
+        setTimeout(updateJumpLength, 50);
+    });
+}
+
+// Init
+attachJumpLengthListeners();
+updateJumpLength();
+// ── END Jump & Length calculator ───────────────────────────────────────────
+
+</script>
+
+<script>
+// ── GeCo Numpad Engine ────────────────────────────────────────────────────
+const GeCo_NP = (function(){
+    let activeId = null;
+    let tempVal = '';
+
+    function openPopup(id){
+        closeAll();
+        activeId = id;
+        tempVal = String(document.getElementById(id).value || '0');
+        refreshDisplay(id);
+        const popup = document.getElementById('np-popup-' + id);
+        if(popup) popup.classList.add('np-popup-open');
+        const disp = document.getElementById('np-display-' + id);
+        if(disp) disp.classList.add('np-open');
+    }
+
+    function closeAll(){
+        if(activeId){
+            // Auto-conferma il valore digitato invece di scartarlo
+            let v = tempVal;
+            if(v === '' || v === '-') v = '0';
+            const inp = document.getElementById(activeId);
+            const disp = document.getElementById('np-display-' + activeId);
+            if(inp){ inp.value = v; inp.dispatchEvent(new Event('input', {bubbles:true})); inp.dispatchEvent(new Event('change', {bubbles:true})); }
+            if(disp) disp.textContent = v;
+
+            document.querySelectorAll('.np-popup').forEach(p => p.classList.remove('np-popup-open'));
+            document.querySelectorAll('.np-fake-input').forEach(d => d.classList.remove('np-open'));
+            activeId = null;
+            tempVal = '';
+        }
+    }
+
+    function refreshDisplay(id){
+        const disp = document.getElementById('np-display-' + id);
+        if(disp) disp.textContent = tempVal === '' || tempVal === '-' ? (tempVal || '_') : tempVal;
+    }
+
+    function appendDigit(d){
+        if(!activeId) return;
+        const sign = tempVal.startsWith('-') ? '-' : '';
+        let digits = tempVal.replace('-','');
+        if(digits === '0' || digits === '') digits = d;
+        else digits += d;
+        if(digits.length > 4) return;
+        tempVal = sign + digits;
+        refreshDisplay(activeId);
+    }
+
+    function toggleMinus(){
+        if(!activeId) return;
+        tempVal = tempVal.startsWith('-') ? tempVal.slice(1) : '-' + tempVal;
+        refreshDisplay(activeId);
+    }
+
+    function deleteLast(){
+        if(!activeId) return;
+        tempVal = tempVal.slice(0,-1);
+        if(tempVal === '-') tempVal = '';
+        refreshDisplay(activeId);
+    }
+
+    function confirm(){
+        if(!activeId) return;
+        let v = tempVal;
+        if(v === '' || v === '-') v = '0';
+        const inp = document.getElementById(activeId);
+        const disp = document.getElementById('np-display-' + activeId);
+        if(inp){ inp.value = v; inp.dispatchEvent(new Event('input', {bubbles:true})); inp.dispatchEvent(new Event('change', {bubbles:true})); }
+        if(disp) disp.textContent = v;
+        closeAll();
+    }
+
+    function buildPopup(id){
+        const popup = document.getElementById('np-popup-' + id);
+        if(!popup || popup.dataset.built) return;
+        popup.dataset.built = '1';
+        const disp = document.createElement('div');
+        disp.className = 'np-disp';
+        disp.id = 'np-disp-' + id;
+        popup.appendChild(disp);
+        const grid = document.createElement('div');
+        grid.className = 'np-grid';
+        [7,8,9,4,5,6,1,2,3].forEach(n => {
+            const b = document.createElement('button');
+            b.className = 'np-key'; b.type = 'button'; b.textContent = n;
+            b.addEventListener('mousedown', e => { e.preventDefault(); appendDigit(String(n)); });
+            grid.appendChild(b);
+        });
+        const minus = document.createElement('button');
+        minus.className = 'np-key np-key-minus'; minus.type = 'button'; minus.textContent = '−';
+        minus.addEventListener('mousedown', e => { e.preventDefault(); toggleMinus(); });
+        grid.appendChild(minus);
+        const zero = document.createElement('button');
+        zero.className = 'np-key'; zero.type = 'button'; zero.textContent = '0';
+        zero.addEventListener('mousedown', e => { e.preventDefault(); appendDigit('0'); });
+        grid.appendChild(zero);
+        const del = document.createElement('button');
+        del.className = 'np-key np-key-del'; del.type = 'button'; del.textContent = '←';
+        del.addEventListener('mousedown', e => { e.preventDefault(); deleteLast(); });
+        grid.appendChild(del);
+        const ok = document.createElement('button');
+        ok.className = 'np-key np-key-ok'; ok.type = 'button'; ok.textContent = 'OK ✓';
+        ok.addEventListener('mousedown', e => { e.preventDefault(); confirm(); });
+        grid.appendChild(ok);
+        popup.appendChild(grid);
+    }
+
+    function init(id, defaultVal){
+        const anchor = document.getElementById('np-anchor-' + id);
+        const disp = document.getElementById('np-display-' + id);
+        const inp = document.getElementById(id);
+        if(!anchor || !disp || !inp) return;
+        if(defaultVal !== undefined) { inp.value = defaultVal; disp.textContent = defaultVal; }
+        buildPopup(id);
+        disp.addEventListener('click', e => { e.stopPropagation(); openPopup(id); });
+        anchor.addEventListener('click', e => e.stopPropagation());
+    }
+
+    // setValue: for external code that sets .value programmatically
+    function setValue(id, v){
+        const inp = document.getElementById(id);
+        const disp = document.getElementById('np-display-' + id);
+        if(inp) inp.value = v;
+        if(disp) disp.textContent = v;
+    }
+
+    document.addEventListener('click', e => {
+        if(!e.target.closest('.np-anchor')) closeAll();
+    });
+    document.addEventListener('keydown', e => {
+        if(!activeId) return;
+        if(e.key >= '0' && e.key <= '9') appendDigit(e.key);
+        else if(e.key === '-') toggleMinus();
+        else if(e.key === 'Backspace') deleteLast();
+        else if(e.key === 'Enter') confirm();
+        else if(e.key === 'Escape') closeAll();
+    });
+
+    return { init, setValue, closeAll };
+})();
+
+// Init all static numpad fields
+(function(){
+    const staticFields = [
+        ['interval', '3'], ['leap', '-1'],
+        ['interval1','3'], ['leap1','3'], ['interval2','6'], ['leap2','-2'],
+        ['int1','3'], ['lea1','3'], ['int2','6'], ['lea2','-2'], ['int3','-2'], ['lea3','1'],
+        ['inter1','5'], ['inter2','-3'], ['inter3','2'],
+        ['multiK','8']
+    ];
+    staticFields.forEach(([id, def]) => GeCo_NP.init(id, def));
+})();
+
+// (patch rimossa: la sincronizzazione dei display è ora inline in applyParamsFromTxt)
+// ── END GeCo Numpad Engine ────────────────────────────────────────────────
+</script>
+</body>
+</html>

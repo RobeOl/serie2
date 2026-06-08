@@ -14,7 +14,8 @@ def genera_sequenza(seq_type, tipo, note_len,
                     int_i, int_j, int_k,
                     ottave, bass_clef, starting_note,
                     multi_values=None,
-                    discard_closure=False):
+                    discard_closure=False,
+                    midi_min=None, midi_max=None):
     #
     # Dispatcher verso il generatore corretto in base a seq_type.
 
@@ -30,12 +31,14 @@ def genera_sequenza(seq_type, tipo, note_len,
     if seq_type == "Binary":
         s = genera_binary(tipo, note_len, i, j,
                           ottave, bass_clef, starting_note,
-                          discard_closure=discard_closure)
+                          discard_closure=discard_closure,
+                          midi_min=midi_min, midi_max=midi_max)
 
     elif seq_type == "Quaternary":
         s = genera_quaternary(tipo, note_len, i1, j1, i2, j2,
                               ottave, bass_clef, starting_note,
-                              discard_closure=discard_closure)
+                              discard_closure=discard_closure,
+                              midi_min=midi_min, midi_max=midi_max)
 
     elif seq_type == "Senary":
         s = genera_senary(tipo, note_len, ii1, jj1, ii2, jj2, ii3, jj3,

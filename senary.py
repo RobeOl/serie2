@@ -4,7 +4,7 @@ import copy
 from utility import f_octave,f_durata
 
 
-def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note,discard_closure=False):
+def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note,discard_closure=False,midi_min=None,midi_max=None):
     x = note.Note(starting_note)
     x.octave = 4
 
@@ -28,38 +28,38 @@ def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note
         prima = note1.name
 
         note1.transpose(i,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         notes.append(copy.deepcopy(note1))
         seconda = note1.name
         first_couple = [prima,seconda]
 
         # first jump
         note1.transpose(j,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         notes.append(copy.deepcopy(note1))
         prima = note1.name
 
         # second interval
         note1.transpose(ii,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         notes.append(copy.deepcopy(note1))
         seconda = note1.name
 
         # second jump
         note1.transpose(jj,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         notes.append(copy.deepcopy(note1))
         prima = note1.name
 
         # third interval
         note1.transpose(iii,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         notes.append(copy.deepcopy(note1))
         seconda = note1.name
 
         # third jump
         note1.transpose(jjj,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
 
         # change time
         f_durata(note1)
@@ -69,7 +69,7 @@ def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note
         # begin repetition
         # first interval
         note1.transpose(i,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         notes.append(copy.deepcopy(note1))
         seconda = note1.name
 
@@ -80,27 +80,27 @@ def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note
         # following intervals
         while condition:
             note1.transpose(j,inPlace=True)
-            f_octave(note1,ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             notes.append(copy.deepcopy(note1))
             prima = note1.name
 
             note1.transpose(ii,inPlace=True)
-            f_octave(note1,ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             notes.append(copy.deepcopy(note1))
             seconda = note1.name
                 
             note1.transpose(jj,inPlace=True)
-            f_octave(note1,ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             notes.append(copy.deepcopy(note1))
             prima = note1.name
 
             note1.transpose(iii,inPlace=True)
-            f_octave(note1,ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             notes.append(copy.deepcopy(note1))
             seconda = note1.name
                 
             note1.transpose(jjj,inPlace=True)
-            f_octave(note1,ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
 
             # change time
             f_durata(note1)
@@ -108,7 +108,7 @@ def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note
             prima = note1.name
 
             note1.transpose(i,inPlace=True)
-            f_octave(note1,ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             notes.append(copy.deepcopy(note1))
             seconda = note1.name
             current_couple = [prima,seconda]
@@ -125,14 +125,14 @@ def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note
 
         note1.transpose(i,inPlace=True)
         conta = conta+1
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         notes.append(copy.deepcopy(note1))
         seconda = note1.name
         first_couple = [prima,seconda]
 
         # first jump
         note1.transpose(j,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         if conta==note_number:
             f_durata(note1)
             conta=1
@@ -144,7 +144,7 @@ def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note
 
         # second interval
         note1.transpose(ii,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         if conta==note_number:
             f_durata(note1)
             conta=1
@@ -156,7 +156,7 @@ def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note
 
         # second jump
         note1.transpose(jj,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         if conta==note_number:
             f_durata(note1)
             conta=1
@@ -168,7 +168,7 @@ def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note
 
         # third interval
         note1.transpose(iii,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         if conta==note_number:
             f_durata(note1)
             conta=1
@@ -180,7 +180,7 @@ def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note
 
         # third jump
         note1.transpose(jjj,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         if conta==note_number:
             f_durata(note1)
             conta=1
@@ -193,7 +193,7 @@ def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note
         # begin repetition
         # first interval
         note1.transpose(i,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         if conta==note_number:
             f_durata(note1)
             conta=1
@@ -210,7 +210,7 @@ def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note
         # following intervals
         while condition:
             note1.transpose(j,inPlace=True)
-            f_octave(note1,ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             if conta==note_number:
                 f_durata(note1)
                 conta=1
@@ -220,7 +220,7 @@ def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note
             prima = note1.name
 
             note1.transpose(ii,inPlace=True)
-            f_octave(note1,ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             if conta==note_number:
                 f_durata(note1)
                 conta=1
@@ -231,7 +231,7 @@ def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note
             seconda = note1.name
                 
             note1.transpose(jj,inPlace=True)
-            f_octave(note1,ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             if conta==note_number:
                 f_durata(note1)
                 conta=1
@@ -242,7 +242,7 @@ def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note
             prima = note1.name
 
             note1.transpose(iii,inPlace=True)
-            f_octave(note1,ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             if conta==note_number:
                 f_durata(note1)
                 conta=1
@@ -253,7 +253,7 @@ def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note
             seconda = note1.name
                 
             note1.transpose(jjj,inPlace=True)
-            f_octave(note1,ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             if conta==note_number:
                 f_durata(note1)
                 conta=1
@@ -264,7 +264,7 @@ def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note
             prima = note1.name
 
             note1.transpose(i,inPlace=True)
-            f_octave(note1,ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             if conta==note_number:
                 f_durata(note1)
                 conta=1
@@ -283,26 +283,26 @@ def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note
         prima = note1.name
 
         note1.transpose(i,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         notes.append(copy.deepcopy(note1))
         seconda = note1.name
         first_couple = [prima,seconda]
 
         # first jump
         note1.transpose(j,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         notes.append(copy.deepcopy(note1))
         prima = note1.name
 
         # second interval
         note1.transpose(ii,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         notes.append(copy.deepcopy(note1))
         seconda = note1.name
 
         # second jump
         note1.transpose(jj,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         # change time
         #f_durata(note1)
         notes.append(copy.deepcopy(note1))
@@ -310,13 +310,13 @@ def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note
 
         # third interval
         note1.transpose(iii,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         notes.append(copy.deepcopy(note1))
         seconda = note1.name
 
         # third jump
         note1.transpose(jjj,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         # change time
         #f_durata(note1)
         notes.append(copy.deepcopy(note1))
@@ -325,7 +325,7 @@ def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note
         # begin repetition
         # first interval
         note1.transpose(i,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         notes.append(copy.deepcopy(note1))
         seconda = note1.name
 
@@ -336,36 +336,36 @@ def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note
         # following intervals
         while condition:
             note1.transpose(j,inPlace=True)
-            f_octave(note1,ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             notes.append(copy.deepcopy(note1))
             prima = note1.name
 
             note1.transpose(ii,inPlace=True)
-            f_octave(note1,ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             notes.append(copy.deepcopy(note1))
             seconda = note1.name
                 
             note1.transpose(jj,inPlace=True)
-            f_octave(note1,ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             # change time
             #f_durata(note1)
             notes.append(copy.deepcopy(note1))
             prima = note1.name
 
             note1.transpose(iii,inPlace=True)
-            f_octave(note1,ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             notes.append(copy.deepcopy(note1))
             seconda = note1.name
                 
             note1.transpose(jjj,inPlace=True)
-            f_octave(note1,ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             # change time
             #f_durata(note1)
             notes.append(copy.deepcopy(note1))
             prima = note1.name
 
             note1.transpose(i,inPlace=True)
-            f_octave(note1,ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             notes.append(copy.deepcopy(note1))
             seconda = note1.name
             current_couple = [prima,seconda]
@@ -376,7 +376,7 @@ def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note
         prima = note1.name
 
         note1.transpose(i,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         f_durata(note1)
         notes.append(copy.deepcopy(note1))
         seconda = note1.name
@@ -384,35 +384,35 @@ def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note
 
         # first jump
         note1.transpose(j,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         f_durata(note1)
         notes.append(copy.deepcopy(note1))
         prima = note1.name
 
         # second interval
         note1.transpose(ii,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         f_durata(note1)
         notes.append(copy.deepcopy(note1))
         seconda = note1.name
 
         # second jump
         note1.transpose(jj,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         f_durata(note1)
         notes.append(copy.deepcopy(note1))
         prima = note1.name
 
         # third interval
         note1.transpose(iii,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         f_durata(note1)
         notes.append(copy.deepcopy(note1))
         seconda = note1.name
 
         # third jump
         note1.transpose(jjj,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         f_durata(note1)
         notes.append(copy.deepcopy(note1))
         prima = note1.name
@@ -420,7 +420,7 @@ def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note
         # begin repetition
         # first interval
         note1.transpose(i,inPlace=True)
-        f_octave(note1,ottave, oct)
+        f_octave(note1, ottave, oct, midi_min, midi_max)
         f_durata(note1)
         notes.append(copy.deepcopy(note1))
         seconda = note1.name
@@ -432,37 +432,37 @@ def genera_senary(tipo,note_len,i,j,ii,jj,iii,jjj,ottave,bass_clef,starting_note
         # following intervals
         while condition:
             note1.transpose(j,inPlace=True)
-            f_octave(note1,ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             f_durata(note1)
             notes.append(copy.deepcopy(note1))
             prima = note1.name
 
             note1.transpose(ii,inPlace=True)
-            f_octave(note1,ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             f_durata(note1)
             notes.append(copy.deepcopy(note1))
             seconda = note1.name
                 
             note1.transpose(jj,inPlace=True)
-            f_octave(note1,ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             f_durata(note1)
             notes.append(copy.deepcopy(note1))
             prima = note1.name
 
             note1.transpose(iii,inPlace=True)
-            f_octave(note1,ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             f_durata(note1)
             notes.append(copy.deepcopy(note1))
             seconda = note1.name
                 
             note1.transpose(jjj,inPlace=True)
-            f_octave(note1,ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             f_durata(note1)
             notes.append(copy.deepcopy(note1))
             prima = note1.name
 
             note1.transpose(i,inPlace=True)
-            f_octave(note1,ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             f_durata(note1)
             notes.append(copy.deepcopy(note1))
             seconda = note1.name

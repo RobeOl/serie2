@@ -34,7 +34,8 @@ def generate_music(start_note, sequence_type, tempo_type, harmony, harmony_type,
                    int1=1,lea1=3,int2=-2,lea2=5,int3=3,lea3=-7,
                    inter1=3, inter2=3, inter3=6,
                    multi_values=None,
-                   discard_closure=False):
+                   discard_closure=False,
+                   midi_min=None, midi_max=None):
 
     s = genera_sequenza(sequence_type, tempo_type, note_length,
         interval, leap,
@@ -44,7 +45,8 @@ def generate_music(start_note, sequence_type, tempo_type, harmony, harmony_type,
         inter1, inter2, inter3,
         ottave, bass_clef, start_note,
         multi_values=multi_values,
-        discard_closure=discard_closure)
+        discard_closure=discard_closure,
+        midi_min=midi_min, midi_max=midi_max)
 
     if harmony and (tempo_type in ("sequence-constrained", "constant", "length-constrained", "free")):
         if tempo_type in ("sequence-constrained", "constant"):
@@ -455,6 +457,9 @@ def generate_midi():
     raw_multi = data.get("multi_values", [])
     multi_values = [int(v) for v in raw_multi] if raw_multi else None
 
+    midi_min = data.get("midi_min", None)
+    midi_max = data.get("midi_max", None)
+
     s = generate_music(
         data.get("start_note"),
         data.get("sequence_type"),
@@ -481,12 +486,12 @@ def generate_midi():
         data.get("inter2", 0),
         data.get("inter3", 0),
         multi_values=multi_values,
-        discard_closure=bool(data.get("discard_closure", False))
+        discard_closure=bool(data.get("discard_closure", False)),
+        midi_min=midi_min,
+        midi_max=midi_max
     )
 
     # applica il range pitch impostato dallo slider
-    midi_min = data.get("midi_min", None)
-    midi_max = data.get("midi_max", None)
     if midi_min is not None and midi_max is not None:
         if isinstance(s, stream.Score):
             # centra solo la melodia (mano destra, parts[0])

@@ -4,7 +4,7 @@ import copy
 from utility import f_octave,f_durata
 
 
-def genera_multidimensional(tipo, note_len, n_K, ottave, bass_clef, starting_note,discard_closure=False):
+def genera_multidimensional(tipo, note_len, n_K, ottave, bass_clef, starting_note,discard_closure=False,midi_min=None,midi_max=None):
     # Genera una sequenza Multidimensionale con K intervalli per ciclo.
 
     # Parametri
@@ -49,7 +49,7 @@ def genera_multidimensional(tipo, note_len, n_K, ottave, bass_clef, starting_not
         # primo ciclo
         for idx in range(K):
             note1.transpose(n_K[idx], inPlace=True)
-            f_octave(note1, ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             if idx == K - 1:
                 f_durata(note1)          # cambio durata prima del deepcopy
             notes.append(copy.deepcopy(note1))
@@ -58,7 +58,7 @@ def genera_multidimensional(tipo, note_len, n_K, ottave, bass_clef, starting_not
         while current_note != first_note:
             for idx in range(K):
                 note1.transpose(n_K[idx], inPlace=True)
-                f_octave(note1, ottave, oct)
+                f_octave(note1, ottave, oct, midi_min, midi_max)
                 if idx == K - 1:
                     f_durata(note1)
                 notes.append(copy.deepcopy(note1))
@@ -75,7 +75,7 @@ def genera_multidimensional(tipo, note_len, n_K, ottave, bass_clef, starting_not
 
         for idx in range(K):
             note1.transpose(n_K[idx], inPlace=True)
-            f_octave(note1, ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             if conta == note_number:
                 f_durata(note1)
                 conta = 1
@@ -87,7 +87,7 @@ def genera_multidimensional(tipo, note_len, n_K, ottave, bass_clef, starting_not
         while current_note != first_note:
             for idx in range(K):
                 note1.transpose(n_K[idx], inPlace=True)
-                f_octave(note1, ottave, oct)
+                f_octave(note1, ottave, oct, midi_min, midi_max)
                 if conta == note_number:
                     f_durata(note1)
                     conta = 1
@@ -104,14 +104,14 @@ def genera_multidimensional(tipo, note_len, n_K, ottave, bass_clef, starting_not
 
         for idx in range(K):
             note1.transpose(n_K[idx], inPlace=True)
-            f_octave(note1, ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             notes.append(copy.deepcopy(note1))
 
         current_note = note1.name
         while current_note != first_note:
             for idx in range(K):
                 note1.transpose(n_K[idx], inPlace=True)
-                f_octave(note1, ottave, oct)
+                f_octave(note1, ottave, oct, midi_min, midi_max)
                 notes.append(copy.deepcopy(note1))
             current_note = note1.name
 
@@ -123,7 +123,7 @@ def genera_multidimensional(tipo, note_len, n_K, ottave, bass_clef, starting_not
 
         for idx in range(K):
             note1.transpose(n_K[idx], inPlace=True)
-            f_octave(note1, ottave, oct)
+            f_octave(note1, ottave, oct, midi_min, midi_max)
             f_durata(note1)
             notes.append(copy.deepcopy(note1))
 
@@ -131,7 +131,7 @@ def genera_multidimensional(tipo, note_len, n_K, ottave, bass_clef, starting_not
         while current_note != first_note:
             for idx in range(K):
                 note1.transpose(n_K[idx], inPlace=True)
-                f_octave(note1, ottave, oct)
+                f_octave(note1, ottave, oct, midi_min, midi_max)
                 f_durata(note1)
                 notes.append(copy.deepcopy(note1))
             current_note = note1.name

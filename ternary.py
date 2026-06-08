@@ -4,7 +4,7 @@ import copy
 from utility import f_octave,f_durata
 
 
-def genera_ternary(tipo,note_len,i,j,k,ottave,bass_clef,starting_note,discard_closure=False):
+def genera_ternary(tipo,note_len,i,j,k,ottave,bass_clef,starting_note,discard_closure=False,midi_min=None,midi_max=None):
 	c = note.Note(starting_note)
 	c.octave = 4
 
@@ -29,17 +29,17 @@ def genera_ternary(tipo,note_len,i,j,k,ottave,bass_clef,starting_note,discard_cl
 
 		# first axis
 		note1.transpose(i,inPlace=True)
-		f_octave(note1,ottave, oct)
+		f_octave(note1, ottave, oct, midi_min, midi_max)
 		notes.append(copy.deepcopy(note1))
 
 		# second axis
 		note1.transpose(j,inPlace=True)
-		f_octave(note1,ottave, oct)
+		f_octave(note1, ottave, oct, midi_min, midi_max)
 		notes.append(copy.deepcopy(note1))
 
 		# third axis
 		note1.transpose(k,inPlace=True)
-		f_octave(note1,ottave, oct)
+		f_octave(note1, ottave, oct, midi_min, midi_max)
 		f_durata(note1)
 		notes.append(copy.deepcopy(note1))
 
@@ -49,15 +49,15 @@ def genera_ternary(tipo,note_len,i,j,k,ottave,bass_clef,starting_note,discard_cl
 		# begin repetition
 		while condition:
 			note1.transpose(i,inPlace=True)
-			f_octave(note1,ottave, oct)
+			f_octave(note1, ottave, oct, midi_min, midi_max)
 			notes.append(copy.deepcopy(note1))
 
 			note1.transpose(j,inPlace=True)
-			f_octave(note1,ottave, oct)
+			f_octave(note1, ottave, oct, midi_min, midi_max)
 			notes.append(copy.deepcopy(note1))
 
 			note1.transpose(k,inPlace=True)
-			f_octave(note1,ottave, oct)
+			f_octave(note1, ottave, oct, midi_min, midi_max)
 			f_durata(note1)
 			notes.append(copy.deepcopy(note1))
 			current_note = note1.name
@@ -74,7 +74,7 @@ def genera_ternary(tipo,note_len,i,j,k,ottave,bass_clef,starting_note,discard_cl
 
 		# first axis
 		note1.transpose(i,inPlace=True)
-		f_octave(note1,ottave, oct)
+		f_octave(note1, ottave, oct, midi_min, midi_max)
 		if conta==note_number:
 			f_durata(note1)
 			conta=1
@@ -84,7 +84,7 @@ def genera_ternary(tipo,note_len,i,j,k,ottave,bass_clef,starting_note,discard_cl
 
 		# second axis
 		note1.transpose(j,inPlace=True)
-		f_octave(note1,ottave, oct)
+		f_octave(note1, ottave, oct, midi_min, midi_max)
 		if conta==note_number:
 			f_durata(note1)
 			conta=1
@@ -94,7 +94,7 @@ def genera_ternary(tipo,note_len,i,j,k,ottave,bass_clef,starting_note,discard_cl
 
 		# third axis
 		note1.transpose(k,inPlace=True)
-		f_octave(note1,ottave, oct)
+		f_octave(note1, ottave, oct, midi_min, midi_max)
 		if conta==note_number:
 			f_durata(note1)
 			conta=1
@@ -108,7 +108,7 @@ def genera_ternary(tipo,note_len,i,j,k,ottave,bass_clef,starting_note,discard_cl
 		# begin repetition
 		while condition:
 			note1.transpose(i,inPlace=True)
-			f_octave(note1,ottave, oct)
+			f_octave(note1, ottave, oct, midi_min, midi_max)
 			if conta==note_number:
 				f_durata(note1)
 				conta=1
@@ -117,7 +117,7 @@ def genera_ternary(tipo,note_len,i,j,k,ottave,bass_clef,starting_note,discard_cl
 			notes.append(copy.deepcopy(note1))
 
 			note1.transpose(j,inPlace=True)
-			f_octave(note1,ottave, oct)
+			f_octave(note1, ottave, oct, midi_min, midi_max)
 			if conta==note_number:
 				f_durata(note1)
 				conta=1
@@ -126,7 +126,7 @@ def genera_ternary(tipo,note_len,i,j,k,ottave,bass_clef,starting_note,discard_cl
 			notes.append(copy.deepcopy(note1))
 
 			note1.transpose(k,inPlace=True)
-			f_octave(note1,ottave, oct)
+			f_octave(note1, ottave, oct, midi_min, midi_max)
 			if conta==note_number:
 				f_durata(note1)
 				conta=1
@@ -144,17 +144,17 @@ def genera_ternary(tipo,note_len,i,j,k,ottave,bass_clef,starting_note,discard_cl
 
 		# first axis
 		note1.transpose(i,inPlace=True)
-		f_octave(note1,ottave, oct)
+		f_octave(note1, ottave, oct, midi_min, midi_max)
 		notes.append(copy.deepcopy(note1))
 
 		# second axis
 		note1.transpose(j,inPlace=True)
-		f_octave(note1,ottave, oct)
+		f_octave(note1, ottave, oct, midi_min, midi_max)
 		notes.append(copy.deepcopy(note1))
 
 		# third axis
 		note1.transpose(k,inPlace=True)
-		f_octave(note1,ottave, oct)
+		f_octave(note1, ottave, oct, midi_min, midi_max)
 		notes.append(copy.deepcopy(note1))
 
 		current_note = note1.name
@@ -163,15 +163,15 @@ def genera_ternary(tipo,note_len,i,j,k,ottave,bass_clef,starting_note,discard_cl
 		# begin repetition
 		while condition:
 			note1.transpose(i,inPlace=True)
-			f_octave(note1,ottave, oct)
+			f_octave(note1, ottave, oct, midi_min, midi_max)
 			notes.append(copy.deepcopy(note1))
 
 			note1.transpose(j,inPlace=True)
-			f_octave(note1,ottave, oct)
+			f_octave(note1, ottave, oct, midi_min, midi_max)
 			notes.append(copy.deepcopy(note1))
 
 			note1.transpose(k,inPlace=True)
-			f_octave(note1,ottave, oct)
+			f_octave(note1, ottave, oct, midi_min, midi_max)
 			notes.append(copy.deepcopy(note1))
 			current_note = note1.name
 			condition = (current_note!=first_note)
@@ -185,18 +185,18 @@ def genera_ternary(tipo,note_len,i,j,k,ottave,bass_clef,starting_note,discard_cl
 		# first axis
 		note1.transpose(i,inPlace=True)
 		f_durata(note1)
-		f_octave(note1,ottave, oct)
+		f_octave(note1, ottave, oct, midi_min, midi_max)
 		notes.append(copy.deepcopy(note1))
 
 		# second axis
 		note1.transpose(j,inPlace=True)
 		f_durata(note1)
-		f_octave(note1,ottave, oct)
+		f_octave(note1, ottave, oct, midi_min, midi_max)
 		notes.append(copy.deepcopy(note1))
 
 		# third axis
 		note1.transpose(k,inPlace=True)
-		f_octave(note1,ottave, oct)
+		f_octave(note1, ottave, oct, midi_min, midi_max)
 		f_durata(note1)
 		notes.append(copy.deepcopy(note1))
 
@@ -206,17 +206,17 @@ def genera_ternary(tipo,note_len,i,j,k,ottave,bass_clef,starting_note,discard_cl
 		# begin repetition
 		while condition:
 			note1.transpose(i,inPlace=True)
-			f_octave(note1,ottave, oct)
+			f_octave(note1, ottave, oct, midi_min, midi_max)
 			f_durata(note1)
 			notes.append(copy.deepcopy(note1))
 
 			note1.transpose(j,inPlace=True)
-			f_octave(note1,ottave, oct)
+			f_octave(note1, ottave, oct, midi_min, midi_max)
 			f_durata(note1)
 			notes.append(copy.deepcopy(note1))
 
 			note1.transpose(k,inPlace=True)
-			f_octave(note1,ottave, oct)
+			f_octave(note1, ottave, oct, midi_min, midi_max)
 			f_durata(note1)
 			notes.append(copy.deepcopy(note1))
 			current_note = note1.name

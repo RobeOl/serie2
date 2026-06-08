@@ -4,7 +4,7 @@ import copy
 from utility import f_octave,f_durata
 
 
-def genera_binary(tipo,note_len,i,j,ottave,bass_clef,starting_note,discard_closure=False):
+def genera_binary(tipo,note_len,i,j,ottave,bass_clef,starting_note,discard_closure=False,midi_min=None,midi_max=None):
 	c = note.Note(starting_note)
 
 	if starting_note <= 7:
@@ -27,7 +27,7 @@ def genera_binary(tipo,note_len,i,j,ottave,bass_clef,starting_note,discard_closu
 		prima = note1.name
 
 		note1.transpose(i,inPlace=True)
-		f_octave(note1,ottave, oct)
+		f_octave(note1, ottave, oct, midi_min, midi_max)
 		notes.append(copy.deepcopy(note1))
 		seconda = note1.name
 		first_couple = [prima,seconda]
@@ -36,13 +36,13 @@ def genera_binary(tipo,note_len,i,j,ottave,bass_clef,starting_note,discard_closu
 		# following leaps/intervals
 		while condition: 
 			note1.transpose(j,inPlace=True)
-			f_octave(note1,ottave, oct)
+			f_octave(note1, ottave, oct, midi_min, midi_max)
 			f_durata(note1)
 			notes.append(copy.deepcopy(note1))
 			prima = note1.name
 
 			note1.transpose(i,inPlace=True)
-			f_octave(note1,ottave, oct)
+			f_octave(note1, ottave, oct, midi_min, midi_max)
 			notes.append(copy.deepcopy(note1))
 			seconda = note1.name
 		
@@ -59,7 +59,7 @@ def genera_binary(tipo,note_len,i,j,ottave,bass_clef,starting_note,discard_closu
 		prima = note1.name
 
 		note1.transpose(i,inPlace=True)
-		f_octave(note1,ottave, oct)
+		f_octave(note1, ottave, oct, midi_min, midi_max)
 		if conta==note_number:
 			f_durata(note1)
 			conta=1
@@ -74,7 +74,7 @@ def genera_binary(tipo,note_len,i,j,ottave,bass_clef,starting_note,discard_closu
 		# following leaps/intervals
 		while condition: 
 			note1.transpose(j,inPlace=True)
-			f_octave(note1,ottave, oct)
+			f_octave(note1, ottave, oct, midi_min, midi_max)
 			if conta==note_number:
 				f_durata(note1)
 				conta=1
@@ -84,7 +84,7 @@ def genera_binary(tipo,note_len,i,j,ottave,bass_clef,starting_note,discard_closu
 			prima = note1.name
 
 			note1.transpose(i,inPlace=True)
-			f_octave(note1,ottave, oct)
+			f_octave(note1, ottave, oct, midi_min, midi_max)
 			if conta==note_number:
 				f_durata(note1)
 				conta=1
@@ -103,7 +103,7 @@ def genera_binary(tipo,note_len,i,j,ottave,bass_clef,starting_note,discard_closu
 		prima = note1.name
 
 		note1.transpose(i,inPlace=True)
-		f_octave(note1,ottave, oct)
+		f_octave(note1, ottave, oct, midi_min, midi_max)
 		notes.append(copy.deepcopy(note1))
 		seconda = note1.name
 		first_couple = [prima,seconda]
@@ -112,12 +112,12 @@ def genera_binary(tipo,note_len,i,j,ottave,bass_clef,starting_note,discard_closu
 		# following leaps/intervals
 		while condition: 
 			note1.transpose(j,inPlace=True)
-			f_octave(note1,ottave, oct)
+			f_octave(note1, ottave, oct, midi_min, midi_max)
 			notes.append(copy.deepcopy(note1))
 			prima = note1.name
 
 			note1.transpose(i,inPlace=True)
-			f_octave(note1,ottave, oct)
+			f_octave(note1, ottave, oct, midi_min, midi_max)
 			notes.append(copy.deepcopy(note1))
 			seconda = note1.name
 		
@@ -131,7 +131,7 @@ def genera_binary(tipo,note_len,i,j,ottave,bass_clef,starting_note,discard_closu
 		prima = note1.name
 
 		note1.transpose(i,inPlace=True)
-		f_octave(note1,ottave, oct)
+		f_octave(note1, ottave, oct, midi_min, midi_max)
 		f_durata(note1)
 		notes.append(copy.deepcopy(note1))
 		seconda = note1.name
@@ -141,13 +141,13 @@ def genera_binary(tipo,note_len,i,j,ottave,bass_clef,starting_note,discard_closu
 		# following leaps/intervals
 		while condition: 
 			note1.transpose(j,inPlace=True)
-			f_octave(note1,ottave, oct)
+			f_octave(note1, ottave, oct, midi_min, midi_max)
 			f_durata(note1)
 			notes.append(copy.deepcopy(note1))
 			prima = note1.name
 
 			note1.transpose(i,inPlace=True)
-			f_octave(note1,ottave, oct)
+			f_octave(note1, ottave, oct, midi_min, midi_max)
 			f_durata(note1)
 			notes.append(copy.deepcopy(note1))
 			seconda = note1.name
